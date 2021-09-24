@@ -1,0 +1,51 @@
+---
+title: "Laboratoorne töö nr 2 Kehade ruumala määramine"
+author: 'peacecop kalmer:'
+date: "9/24/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Töö eesmärgid
+
+1. Kehade lineaarmõõtmete ja keskmise ruumala leidmine.
+2. Statistilise andmetöötluse meetoditega tutvumine.
+
+## Töövahendid
+
+Nihkkaliiber ehk nihik, 6 katsekeha.
+
+## Töö käik
+
+Antud katses mõõdeti risttahukate pikkus *a*, laius *b* ning kõrgus *h* nihkkaliibri ehk nihikuga. Seejärel leiti risttahukate ruumala *V = a b h*. Kuivõrd ruumala määramisel on tegemist kaudse mõõtmisega, siis tuli mõõtemääramatuse arvestamisel arvutada mõõtetäpsusest tulenev mõõtemääramatus järgmiselt:
+
+
+
+kus *Δa*, *Δb*, *Δh* on vastavalt pikkuse, laiuse ja kõrguse mõõtetäpsused.
+
+1. Mõõtsime risttahukate lineaarmõõtmed ja kandsime need tabelisse 2.1.
+
+
+
+Mõõtmiste piiriviga pikkuse, laiuse ja kõrguse jaoks: 
+
+2. Lasin arvutada B-tüüpi mõõtemääramatused pikkuse, laiuse ja kõrguse jaoks piiriviga arvestades 95% usaldatavusega. 
+
+2. Lasin arvutada juhuslikkusest tingitud mõõtemääramatused 
+
+3. Lasin arvutada liitmääramatuse pikkuse, laiuse ja kõrguse jaoks, arvestades, et
+
+3. Lasin arvutada mõõtemääramatuse ruumala jaoks: 
+
+4. Võrdluseks lasin arvutada mõõtemääramatuse hinnangu ka teisiti. Lasin arvutada risttahukate keskmise ruumala 
+
+5. Lasin hinnata erinevatel meetoditel saadud ruumalade mõõtemääramatusi - mitu korda need erinevad.
+
+6. Esitasin lahendid kujul:
+
+Risttahuka keskmine ruumala on 
+
+Lasin ka arvutada risttahuka ruumala määramise suhtelise vea.

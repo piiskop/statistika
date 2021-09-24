@@ -1,0 +1,10 @@
+name: "üldmõõtmised-loodusteadustes"
+navbar:
+  title: "Üldmõõtmised loodusteadustes"
+  left:
+    - text: "Heli intensiivsuse määramine"
+      href: index.html
+    - text: "Kehade ruumala määramine"
+      href: kehade-ruumala-määramine.html
+    - text: "Autor"
+      href: about.html
