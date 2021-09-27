@@ -133,7 +133,7 @@ meanSdVolume = sdVolume / sqrt(length(volumes))
 round(meanSdVolume, 9)
 ```
 
-Lasin arvutada risttahukate juhuslikest erinevustest tingitud A-tüüpi mõõtemääramatuse $\Delta V_{n, \beta} * \sigma_{\bar{V}}$, kus *t~n, β~* on Studenti tegur:
+Lasin arvutada risttahukate juhuslikest erinevustest tingitud A-tüüpi mõõtemääramatuse $\Delta V_{n, \beta} * \sigma_{\bar{V}}$, kus *t~n~, ~β~* on Studenti tegur:
 
 ```{r}
 uncertaintyForVolumeBySd = studentTFactor * meanSdVolume
