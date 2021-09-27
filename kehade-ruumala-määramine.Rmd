@@ -1,8 +1,12 @@
 ---
+site: "bookdown::kehade-ruumala-määramine"
 title: "Laboratoorne töö nr 2 Kehade ruumala määramine"
 author: 'peacecop kalmer:'
 date: "9/24/2021"
-output: html_document
+output:
+  bookdown::html_document2:
+    toc: TRUE
+    toc_float: TRUE
 ---
 
 ```{r setup, include=FALSE}
@@ -20,32 +24,130 @@ Nihkkaliiber ehk nihik, 6 katsekeha.
 
 ## Töö käik
 
-Antud katses mõõdeti risttahukate pikkus *a*, laius *b* ning kõrgus *h* nihkkaliibri ehk nihikuga. Seejärel leiti risttahukate ruumala *V = a b h*. Kuivõrd ruumala määramisel on tegemist kaudse mõõtmisega, siis tuli mõõtemääramatuse arvestamisel arvutada mõõtetäpsusest tulenev mõõtemääramatus järgmiselt:
+Antud katses mõõdeti risttahukate pikkus *a*, laius *b* ning kõrgus *h* nihkkaliibri ehk nihikuga. Seejärel leiti risttahukate ruumala *V = a \* b \* h*. Kuivõrd ruumala määramisel on tegemist kaudse mõõtmisega, siis tuli mõõtemääramatuse arvestamisel arvutada mõõtetäpsusest tulenev mõõtemääramatus järgmiselt:
+$$\begin{equation}
+ΔV=\sqrt{(\frac{\partial V}{\partial a}) ^ 2 * (\Delta a) ^ 2 + (\frac{\partial V}{\partial b}) ^ 2 * (\Delta b) ^ 2 + (\frac{\partial V}{\partial h}) ^ 2 * (\Delta h) ^ 2} === \sqrt{(b * h * \Delta a) ^ 2 + (a * h * \Delta b) ^ 2 + (a * b * \Delta h) ^ 2} (\#eq:volume)
+\end{equation}$$
 
+Selles *Δa*, *Δb*, *Δh* on vastavalt pikkuse, laiuse ja kõrguse mõõtetäpsused.
 
+1. Mõõtsime risttahukate lineaarmõõtmed ja kandsime need tabelisse \@ref(tab:tableOfMeasurements).
 
-kus *Δa*, *Δb*, *Δh* on vastavalt pikkuse, laiuse ja kõrguse mõõtetäpsused.
+```{r tableOfMeasurements}
+library(tibble)
+measurements = tibble(a = c(39.9, 41.5, 40.05, 39.9, 39.95, 40.1), b = c(24.8, 24.85, 24.95, 25.05, 24.9, 24.95), h = c(8.2, 8.45, 8.3, 8.3, 8.45, 8.15))
+library(kableExtra)
+measurements %>% kbl(caption = "Risttahukate lineaarmõõtmed millimeetrites") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+```
 
-1. Mõõtsime risttahukate lineaarmõõtmed ja kandsime need tabelisse 2.1.
+Vähim ühik mõõteseadmel oli .05 mm. Lasin arvutada mõõtmiste piirvea:
+```{r}
+boundaryError = .05 / 2
+```
 
+Mõõtmiste piiriviga pikkuse, laiuse ja kõrguse jaoks oli *e~a~ = e~b~ = e~h~ = `r boundaryError` mm*.
 
+2. Lasin arvutada B-tüüpi mõõtemääramatused pikkuse, laiuse ja kõrguse jaoks piiriviga arvestades 95% usaldatavusega:
+```{r}
+measurementUncertaintyOfTypeB = boundaryError * .95
+```
 
-Mõõtmiste piiriviga pikkuse, laiuse ja kõrguse jaoks: 
+*Δa~n~ = Δb~n~ = Δh~h~ = `r measurementUncertaintyOfTypeB` mm*.
 
-2. Lasin arvutada B-tüüpi mõõtemääramatused pikkuse, laiuse ja kõrguse jaoks piiriviga arvestades 95% usaldatavusega. 
+2. Lasin arvutada juhuslikkusest tingitud mõõtemääramatused *Δa~n~*, *Δb~n~*, *Δh~h~* 95-% usaldatavuse korral:
 
-2. Lasin arvutada juhuslikkusest tingitud mõõtemääramatused 
+Esmalt üksikmõõtmise standardhälbed:
 
-3. Lasin arvutada liitmääramatuse pikkuse, laiuse ja kõrguse jaoks, arvestades, et
+```{r}
+sds = apply(measurements, 2, function(measurement) { round(sd(measurement), 3) })
+sds
+```
 
-3. Lasin arvutada mõõtemääramatuse ruumala jaoks: 
+Seejärel keskmised standardhälbed:
+```{r}
+averageSds = apply(measurements, 2, function(measurement) { round(sd(measurement) / sqrt(nrow(measurements)), 3)})
+averageSds
+```
+Kuna mõõtsime kuue klotsi pikkuse, laiuse ja kõrguse, siis arvutan Studenti T jaotuse ja vastava kordaja tõenäosuse .95 % korral selliselt:
 
-4. Võrdluseks lasin arvutada mõõtemääramatuse hinnangu ka teisiti. Lasin arvutada risttahukate keskmise ruumala 
+```{r}
+library(distributions3)
+studentTDistribution = StudentsT(df = nrow(measurements) - 1)
+studentTDistribution
+studentTFactor = quantile(studentTDistribution, 1 - .05 / 2)
+studentTFactor
+```
 
-5. Lasin hinnata erinevatel meetoditel saadud ruumalade mõõtemääramatusi - mitu korda need erinevad.
+Lõpuks mõõtemääramatused:
+```{r}
+measurementUncertaintiesOfTypeA = apply(measurements, 2, function(measurement) {
+  round(studentTFactor * sd(measurement) / sqrt(nrow(measurements)), 3)
+})
+measurementUncertaintiesOfTypeA
+```
+
+3. Lasin arvutada liitmääramatuse pikkuse, laiuse ja kõrguse jaoks, arvestades, et $\begin{equation} \Delta a = \sqrt{\Delta (a_{A}) ^ 2 + \Delta (a_{B} ^ 2)} \end{equation}$. Analoogiliselt ka laiuse ja kõrguse jaoks:
+```{r}
+commonUncertainties = apply(measurements, 2, function(measurement) {
+  round(sqrt((studentTFactor * sd(measurement) / sqrt(nrow(measurements))) ^ 2 + measurementUncertaintyOfTypeB ^ 2), 3)
+})
+commonUncertainties
+```
+
+3. Lasin arvutada mõõtemääramatuse ruumala jaoks: *ΔV* vastavalt seosele \@ref(eq:volume):
+```{r}
+meanOfA = mean(measurements$a)
+round(meanOfA, 3)
+meanOfB = mean(measurements$b)
+round(meanOfB, 3)
+meanOfH = mean(measurements$h)
+round(meanOfH, 3)
+commonUncertaintyForA = sqrt((studentTFactor * sd(measurements$a) / sqrt(nrow(measurements))) ^ 2 + measurementUncertaintyOfTypeB ^ 2)
+round(commonUncertaintyForA, 3)
+commonUncertaintyForB = sqrt((studentTFactor * sd(measurements$b) / sqrt(nrow(measurements))) ^ 2 + measurementUncertaintyOfTypeB ^ 2)
+round(commonUncertaintyForB, 3)
+commonUncertaintyForH = sqrt((studentTFactor * sd(measurements$h) / sqrt(nrow(measurements))) ^ 2 + measurementUncertaintyOfTypeB ^ 2)
+round(commonUncertaintyForH, 3)
+uncertaintyForVolume = sqrt((meanOfB * meanOfH * commonUncertaintyForA) ^ 2 + (meanOfA * meanOfH * commonUncertaintyForB) ^ 2 + (meanOfA * meanOfB * commonUncertaintyForH) ^ 2)
+round(uncertaintyForVolume, 9)
+```
+
+4. Võrdluseks lasin arvutada mõõtemääramatuse hinnangu ka teisiti. Lasin arvutada risttahukate keskmise ruumala $\bar{V}$:
+```{r}
+meanVolume = meanOfA * meanOfB * meanOfH
+round(meanVolume, 9)
+```
+
+Samuti lasin arvutada aritmeetilise keskmise standardhälbe ruumalade kohta:
+
+```{r}
+volumes = apply(measurements, 1, prod)
+sdVolume = sd(volumes)
+round(sdVolume, 9)
+```
+
+Lasin arvutada $\sigma_{\bar{V}}$:
+
+```{r}
+meanSdVolume = sdVolume / sqrt(length(volumes))
+round(meanSdVolume, 9)
+```
+
+Lasin arvutada risttahukate juhuslikest erinevustest tingitud A-tüüpi mõõtemääramatuse $\Delta V_{n, \beta} * \sigma_{\bar{V}}$, kus *t~n, β~* on Studenti tegur:
+
+```{r}
+uncertaintyForVolumeBySd = studentTFactor * meanSdVolume
+round(uncertaintyForVolumeBySd, 9)
+```
+
+5. Lasin hinnata erinevatel meetoditel saadud ruumalade mõõtemääramatusi - mitu korda need erinevad:
+```{r}
+relationBetweenUncertainties = uncertaintyForVolume / uncertaintyForVolumeBySd
+round(relationBetweenUncertainties, 6)
+```
 
 6. Esitasin lahendid kujul:
 
-Risttahuka keskmine ruumala on 
+Risttahuka keskmine ruumala on $V = (\bar{V} + \Delta V) m^{3} = (`r round(meanVolume, 9)` + `r round(uncertaintyForVolume, 9)`) m^{3}$
 
-Lasin ka arvutada risttahuka ruumala määramise suhtelise vea.
+Lasin ka arvutada risttahuka ruumala määramise suhtelise vea. $R_{V} = \frac{\Delta V}{\bar{V}} * 100 \% === \frac{`r uncertaintyForVolume`}{`r meanVolume`} * 100 \% === `r round(uncertaintyForVolume / meanVolume * 100, 6)` \%$.
