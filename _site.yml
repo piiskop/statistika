@@ -6,5 +6,7 @@ navbar:
       href: index.html
     - text: "Kehade ruumala määramine"
       href: kehade-ruumala-määramine.html
+    - text: "Reaktsioonikiiruse määramine"
+      href: histogramm.html
     - text: "Autor"
       href: about.html

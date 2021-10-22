@@ -1,0 +1,346 @@
+---
+site: "bookdown::histogramm"
+title: "Laboratoorne töö Reaktsioonikiiruse määramine"
+author: 'peacecop kalmer:'
+date: "9/29/2021"
+output:
+  bookdown::html_document2:
+    toc: TRUE
+    toc_float: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Töö eesmärgid
+1. Reaktsioonikiiruse määramine.
+2. Statistilise andmetöötluse meetoditega tutvumine
+
+## Töövahendid:
+
+Joonlaud.
+
+##Töö käik, teoreetiline osa:
+
+Kui keha kukub vabalt ning õhutakistuse võib jätta arvestamata, siis tema y-koordinaat *h* sõltub ajast *t* järgmiselt:
+
+$$\begin{equation}
+h=\frac{1}{2}*g*t^2 (\#eq:height)
+\end{equation}$$
+
+Selles valemis *g = 9.81 m / s^2^* on vaba langemise kiirendus. Antud töös määratakse inimese reaktsiooni kiirus seost \@ref(eq:height) kasutades järgmiselt. Joonlauda (või mingi muu õhuke lauda) hoitakse seina lähedal. Inimene, kelle raktsioonikiirust mõõdetakse, hoiab oma kätt võimalikult laua lähedal, kuid mitte vastu lauda. Laud lastakse kukkuma ning inimene, kelle raktsioonikiirust mõõdetakse, surub selle vastu seina. Kui laud on seinale piisavalt lähedal ning inimese käsi lauale väga lähedal, siis võib jätta arvestamata aja, mis kulub käe liigutamiseks seina suunas. Seega võib eeldada, et laua kukkumiseks kulunud aega on ligikaudu võrdne inimese reaktsiooniajaga. Seosest \@ref(eq:height) saame
+
+$$\begin{equation}
+t=\sqrt({2*h}/{g}) (#eq:time)
+\end{equation}$$
+
+## Töö käik:
+
+1. Töö viidi läbi rühmades. Üks üliõpilane hoidis joonlauda vastu seina ning lasi lahti, uuritav üliõpilane hoidis kätt joonlaua lähedal ning üritas joonlaua lahtilaskmise hetkel selle tihedalt vastu seina suruda. Pärast iga katset tuli leida joonlaua kukkumisel läbitud vahemaa *h*. Katset tuli korrata vähemalt kümme korda ning andmed kanda tabelisse.
+
+2. Arvutasin keskmise kukkumise vahemaa $\bar{h}$ iga osaleja kohta ja kokku. Keskmise reaktsiooniaja sain valemi \@ref(eq:height) põhjal asetades valemisse *h* asemele keskmise kukkumise vahemaa ning arvestades, et vaba langemise kiirendus *g*=9,81 *m/s^2^*. St
+$$\begin{equation}
+\bar{t}=\sqrt{\frac{2*\bar{h}}{g}}
+\end{equation}$$
+
+3. Arvutasin üksikmõõtmise standardhälbe *σ~h~* ning selle abil aritmeetilise keskmise standardhälbe $\sigma_{\bar{h}}=\frac{1}{\sqrt{n}}*\sigma_{h}$, kus *n* on katsete arv. Viimase arvutasin ainult kõikide osalejate mõõtmistulemuste kohta kokku, sest selle jaoks peab valimis olema vähemalt 20 üksust, meil oli iga osaleja kohta ainult kümme. ^[[Standard Error vs Standard Deviation: What’s the Difference?](https://careerfoundry.com/en/blog/data-analytics/standard-error-vs-standard-deviation/){target="Careerfoundry"}]
+
+4. Arvutasin kukkumise kõrguse mõõtemääramatuse $\Delta h_{juh}=t_{n,β}*\sigma_{\bar{h}}$, kus *t~n,β* on Studenti tegur *n* mõõtmise ning usaldusväärsuse β = 95 % korral.
+
+5. Arvutasin nüüd kõrguse määramise liitmääramatuse (kukkumiskõrguse määramise liitvea). Olgu kõrguse määramise viga *Δh_mõõt* - näitab mõõteriista täpsust. Siis kõrguse jaoks on liitmääramatus $\Delta h=\sqrt{(\Delta h_{juh})^2+(\Delta h_{mõõt})^2}$.
+
+6. Reaktsiooniaja liitmääramatuse saame järgmiselt:
+$$\begin{equation}
+\Delta t=\sqrt{\frac{2}{g}}*\frac{\partial{\sqrt{h}}}{\partial{h}}\Delta{h}=\sqrt{\frac{2}{g}}*\frac{1}{2*\sqrt{h}}*\Delta{h}=\frac{1}{\sqrt{2*g*h}}*\Delta{h}
+\end{equation}$$
+
+7. Kirjutasin reaktsiooniaja hinnangu kujul $t=(\bar{t}\pm\Delta{t})s$.
+
+8. Arvutasin keskmise reaktsiooniaja ka tabeli \@ref(tab:allMeasurements) teise tulba keskmiste põhjal, samuti mõõtemääramatuse nende aegade põhjal ja võrdlesin saadud tulemusi punktide *2* - *6* põhjal saadud tulemustega. Kui palju need omavahel erinevad?
+
+9. Koostasin histogrammi.
+
+Tabelitesse \@ref(tab:reactionTimesOf-kalmer) - \@ref(tab:reactionTimesOfParticipant7) sisestasin testimises osalenud inimeste reageerimiste tulemused koos arvutatud näidikute väärtustega.
+
+```{r}
+measurementsOf_kalmer_cm = c(21.4, 25.4, 26.6, 23.4, 19.5, 22.6, 26.5, 26.8, 25.7, 28.1)
+measurementsOf_kalmer_m = sapply(measurementsOf_kalmer_cm, function(measurement) {
+  measurement / 100
+})
+```
+
+```{r reactionTimesOf-kalmer}
+library(tibble)
+measurementsOf_kalmer = tibble("Kukkumise vahemaa *h (cm)*" = measurementsOf_kalmer_cm, "Kukkumise vahemaa *h (m)*" = measurementsOf_kalmer_m)
+meanFor_kalmer = mean(measurementsOf_kalmer_m)
+standardDeviationFor_kalmer = sd(measurementsOf_kalmer_m)
+library(kableExtra)
+measurementsOf_kalmer %>% kbl(caption = "peacecop kalmeri: reageerimised") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+```{r}
+measurementsOfElin_cm = c(32.2, 31.5, 32.4, 30.4, 28.4, 29.6, 30.6, 30.5, 28, 33.2)
+measurementsOfElin_m = sapply(measurementsOfElin_cm, function(measurement) {
+  measurement / 100
+})
+```
+
+```{r reactionTimesOfElin}
+library(tibble)
+measurementsOfElin = tibble("Kukkumise vahemaa *h (cm)*" = measurementsOf_kalmer_cm, "Kukkumise vahemaa *h (m)*" = measurementsOfElin_m)
+meanForElin = mean(measurementsOfElin_m)
+standardDeviationForElin = sd(measurementsOfElin_m)
+library(kableExtra)
+measurementsOfElin %>% kbl(caption = "Elini reageerimised") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+```{r}
+measurementsOf_birgit_cm = c(35.5, 29.5, 31, 33.6, 30, 28.4, 27.5, 27.3, 24.9, 25.8)
+measurementsOf_birgit_m = sapply(measurementsOf_birgit_cm, function(measurement) {
+  measurement / 100
+})
+```
+
+```{r reactionTimesOf-birgit}
+library(tibble)
+measurementsOf_birgit = tibble("Kukkumise vahemaa *h (cm)*" = measurementsOf_kalmer_cm, "Kukkumise vahemaa *h (m)*" = measurementsOf_birgit_m)
+meanFor_birgit = mean(measurementsOf_birgit_m)
+standardDeviationFor_birgit = sd(measurementsOf_birgit_m)
+library(kableExtra)
+measurementsOf_birgit %>% kbl(caption = "birgiti reageerimised") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+```{r}
+measurementsOfParticipant0_cm = c(19L, 14L, 8L, 6L, 13L, 21L, 17L, 11L, 13L, 9L)
+measurementsOfParticipant0_m = sapply(measurementsOfParticipant0_cm, function(measurement) {
+  measurement / 100
+})
+```
+
+```{r reactionTimesOfParticipant0}
+library(tibble)
+measurementsOfParticipant0 = tibble("Kukkumise vahemaa *h (cm)*" = measurementsOf_kalmer_cm, "Kukkumise vahemaa *h (m)*" = measurementsOfParticipant0_m)
+meanForParticipant0 = mean(measurementsOfParticipant0_m)
+standardDeviationForParticipant0 = sd(measurementsOfParticipant0_m)
+library(kableExtra)
+measurementsOfParticipant0 %>% kbl(caption = "Esimese tundmatu osaleja reageerimised") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+```{r}
+measurementsOfParticipant1_cm = c(36L, 23L, 18L, 23L, 23L, 14L, 19L, 16L, 21L, 25L)
+measurementsOfParticipant1_m = sapply(measurementsOfParticipant1_cm, function(measurement) {
+  measurement / 100
+})
+```
+
+```{r reactionTimesOfParticipant1}
+library(tibble)
+measurementsOfParticipant1 = tibble("Kukkumise vahemaa *h (cm)*" = measurementsOf_kalmer_cm, "Kukkumise vahemaa *h (m)*" = measurementsOfParticipant1_m)
+meanForParticipant1 = mean(measurementsOfParticipant1)
+standardDeviationForParticipant1 = sd(measurementsOfParticipant1_m)
+library(kableExtra)
+measurementsOfParticipant1 %>% kbl(caption = "Teise tundmatu osaleja reageerimised") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+```{r}
+measurementsOfParticipant2_cm = c(26L, 23L, 15L, 18L, 14L, 16L, 20L, 17L, 10L, 23L)
+measurementsOfParticipant2_m = sapply(measurementsOfParticipant2_cm, function(measurement) {
+  measurement / 100
+})
+```
+
+```{r reactionTimesOfParticipant2}
+library(tibble)
+measurementsOfParticipant2 = tibble("Kukkumise vahemaa *h (cm)*" = measurementsOf_kalmer_cm, "Kukkumise vahemaa *h (m)*" = measurementsOfParticipant2_m)
+meanForParticipant2 = mean(measurementsOfParticipant2)
+standardDeviationForParticipant2 = sd(measurementsOfParticipant2_m)
+library(kableExtra)
+measurementsOfParticipant2 %>% kbl(caption = "Kolmanda tundmatu osaleja reageerimised") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+```{r}
+measurementsOfParticipant3_cm = c(30, 34, 12, 17, 28, 18, 17, 22.5, 27, 15)
+measurementsOfParticipant3_m = sapply(measurementsOfParticipant3_cm, function(measurement) {
+  measurement / 100
+})
+```
+
+```{r reactionTimesOfParticipant3}
+library(tibble)
+measurementsOfParticipant3 = tibble("Kukkumise vahemaa *h (cm)*" = measurementsOf_kalmer_cm, "Kukkumise vahemaa *h (m)*" = measurementsOfParticipant3_m)
+meanForParticipant3 = mean(measurementsOfParticipant3_m)
+standardDeviationForParticipant3 = sd(measurementsOfParticipant3_m)
+library(kableExtra)
+measurementsOfParticipant3 %>% kbl(caption = "Neljanda tundmatu osaleja reageerimised") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+```{r}
+measurementsOfParticipant4_cm = c(27, 17.5, 15.3, 20, 21, 15.5, 11.5, 24, 14.5, 18)
+measurementsOfParticipant4_m = sapply(measurementsOfParticipant4_cm, function(measurement) {
+  measurement / 100
+})
+```
+
+```{r reactionTimesOfParticipant4}
+library(tibble)
+measurementsOfParticipant4 = tibble("Kukkumise vahemaa *h (cm)*" = measurementsOf_kalmer_cm, "Kukkumise vahemaa *h (m)*" = measurementsOfParticipant4_m)
+meanForParticipant4 = mean(measurementsOfParticipant4_m)
+standardDeviationForParticipant4 = sd(measurementsOfParticipant4_m)
+library(kableExtra)
+measurementsOfParticipant4 %>% kbl(caption = "Viienda tundmatu osaleja reageerimised") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+```{r}
+measurementsOf_iTi_cm = c(30, 24.1, 25, 29.6, 18.5, 18.9, 20.2, 26.8, 20.9, 24.)
+measurementsOf_iTi_m = sapply(measurementsOf_iTi_cm, function(measurement) {
+  measurement / 100
+})
+```
+
+```{r reactionTimesOf-iTi}
+library(tibble)
+measurementsOf_iTi = tibble("Kukkumise vahemaa *h (cm)*" = measurementsOf_kalmer_cm, "Kukkumise vahemaa *h (m)*" = measurementsOf_iTi_m)
+meanForParticipant_iTi = mean(measurementsOf_iTi_m)
+standardDeviationFor_iTi = sd(measurementsOf_iTi_m)
+library(kableExtra)
+measurementsOf_iTi %>% kbl(caption = "iTi reageerimised") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+```{r}
+measurementsOfParticipant5_cm = c(27.5, 16.3, 17.7, 34.8, 20.4, 17.6, 18, 16.5, 17.3, 16.2)
+measurementsOfParticipant5_m = sapply(measurementsOfParticipant5_cm, function(measurement) {
+  measurement / 100
+})
+```
+
+```{r reactionTimesOfParticipant5}
+library(tibble)
+measurementsOfParticipant5 = tibble("Kukkumise vahemaa *h (cm)*" = measurementsOf_kalmer_cm, "Kukkumise vahemaa *h (m)*" = measurementsOfParticipant5_m)
+meanForParticipant5 = mean(measurementsOfParticipant5_m)
+standardDeviationForParticipant5 = sd(measurementsOfParticipant5_m)
+library(kableExtra)
+measurementsOfParticipant5 %>% kbl(caption = "Kuuenda tundmatu osaleja reageerimised") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+```{r}
+measurementsOf_berit_cm = c(19L, 14L, 8L, 6L, 13L, 21L, 17L, 11L, 13L, 9L)
+measurementsOf_berit_m = sapply(measurementsOf_berit_cm, function(measurement) {
+  measurement / 100
+})
+```
+
+```{r reactionTimesOf-berit}
+library(tibble)
+measurementsOf_berit = tibble("Kukkumise vahemaa *h (cm)*" = measurementsOf_kalmer_cm, "Kukkumise vahemaa *h (m)*" = measurementsOf_berit_m)
+meanFor_berit = mean(measurementsOf_berit_m)
+standardDeviationFor_berit = sd(measurementsOf_berit_m)
+library(kableExtra)
+measurementsOf_berit %>% kbl(caption = "beriti reageerimised") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+```{r}
+measurementsOfParticipant6_cm = c(17L, 23L, 18L, 23L, 23L, 14L, 19L, 16L, 21L, 25L)
+measurementsOfParticipant6_m = sapply(measurementsOfParticipant6_cm, function(measurement) {
+  measurement / 100
+})
+```
+
+```{r reactionTimesOfParticipant6}
+library(tibble)
+measurementsOfParticipant6 = tibble("Kukkumise vahemaa *h (cm)*" = measurementsOf_kalmer_cm, "Kukkumise vahemaa *h (m)*" = measurementsOfParticipant6_m)
+meanForParticipant6 = mean(measurementsOfParticipant6_m)
+standardDeviationForParticipant6 = measurementsOfParticipant6_m
+library(kableExtra)
+measurementsOfParticipant6 %>% kbl(caption = "Seitsmenda tundmatu osaleja reageerimised") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+```{r}
+measurementsOfParticipant7_cm = c(26L, 23L, 15L, 18L, 14L, 16L, 2L, 17L, 1L, 23L)
+measurementsOfParticipant7_m = sapply(measurementsOfParticipant7_cm, function(measurement) {
+  measurement / 100
+})
+```
+
+```{r reactionTimesOfParticipant7}
+library(tibble)
+measurementsOfParticipant7 = tibble("Kukkumise vahemaa *h (cm)*" = measurementsOf_kalmer_cm, "Kukkumise vahemaa *h (m)*" = measurementsOfParticipant7_m)
+meanForParticipant7 = mean(measurementsOfParticipant7_m)
+standardDeviationForParticipant7 = sd(measurementsOfParticipant7_m)
+library(kableExtra)
+measurementsOfParticipant7 %>% kbl(caption = "Kaheksanda tundmatu osaleja reageerimised") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+```{r}
+allMeasurementsIn_m = c(measurementsOf_kalmer_m, measurementsOfElin_m, measurementsOf_birgit_m, measurementsOfParticipant0_m, measurementsOfParticipant1_m, measurementsOfParticipant2_m, measurementsOfParticipant3_m, measurementsOfParticipant4_m, measurementsOf_iTi_m, measurementsOfParticipant5_m, measurementsOf_berit_m, measurementsOfParticipant6_m, measurementsOfParticipant7_m)
+meanForAll = mean(allMeasurementsIn_m)
+standardDeviationForAll = sd(allMeasurementsIn_m)
+library(plotrix)
+standardError = std.error(allMeasurementsIn_m)
+library(distributions3)
+numberOfMeasurements = length(allMeasurementsIn_m)
+studentTDistribution = StudentsT(df = numberOfMeasurements - 1)
+studentTDistribution
+studentTFactor = quantile(studentTDistribution, 1 - .05 / 2)
+studentTFactor
+uncertaintyOfTypeA = studentTFactor * standardError
+uncertaintyOfTypeB = .001 / 2 * .95
+uncertainty = sqrt(uncertaintyOfTypeA ^ 2 + uncertaintyOfTypeB ^ 2)
+uncertaintyOfTime = uncertainty / sqrt(2 * 9.81 * meanForAll)
+meanTime = sqrt(2 * meanForAll / 9.81)
+allTimeFrames = sapply(allMeasurementsIn_m, function(measurement) {
+  sqrt(2 * measurement / 9.81)
+})
+meanOfTimeFrames = mean(allTimeFrames)
+standardErrorOfTimeFrames = std.error(allTimeFrames)
+uncertaintyOfTypeAOfTimeFrames = studentTFactor * standardErrorOfTimeFrames
+relationOfTime = uncertaintyOfTypeAOfTimeFrames / uncertaintyOfTime
+allMeasurementsAndTimeFrames = tibble("Kukkumise vahemaa *h (m)*" = allMeasurementsIn_m, "Kukkumise aeg *t(s)*" = allTimeFrames)
+```
+
+```{r allMeasurements}
+allMeasurementsAndTimeFrames %>% kbl(caption = "Kõigi osalejate reaktsioonid") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+library(tidyverse)
+timeFramesAsDataFrame = data.frame(allTimeFrames)
+timeFramesAsDataFrame %>% glimpse()
+hist(allTimeFrames, col = "red")
+library(ggplot2)
+ggplot(data = timeFramesAsDataFrame, aes(x = allTimeFrames)) + geom_histogram()
+```
+
+Kukkumise vahemaa standardviga on `r standardError` meetrit.
+
+Studenti tegur on `r studentTFactor`.
+
+Kukkumise vahemaa juhusliku vea määramatus on `r uncertaintyOfTypeA` meetrit.
+
+Kukkumise vahemaa liitmääramatus on `r uncertainty` meetrit.
+
+Reaktsiooniaja hinnang: *t = (* `r meanTime` *$\pm$ `r uncertaintyOfTime`) s*.
+
+Kui arvutada kõik reaktsiooniajad eraldi välja ja mõõtemääramatus vastavalt nendele, siis selle ja kaudselt arvutatud reaktsiooniaja mõõtemääramatuse erinevus on `r uncertaintyOfTypeAOfTimeFrames - uncertaintyOfTime` sekundit.
+
+## Õpilaste kehade kõrguste näide {#pilaste-kehade-kõrguste-näide}
+
+Olgu meil 30 õpilast klassis, pikkuste vahemikud 161 - 180 cm. Histogramm? Klasside arv k on ligikaudu ruutjuur mõõtmiste arvust. Antud andmetega kuus. Võib ka olla viis. Klassi laius on maksimumi ja miinimumi vahe jagatud klasside arvuga, antud juhul ligikaudu 3 cm. Seega vahemikud: 161 - 164, 164.1 - 167, ..., 176 - 180.
+
+Oletame, et reaktsiooniaja mõõtmistel ülemine väärtus .25, alumine .12 s, siis kogu laius on .25 - .12 === .13 s
+Andmete arv nt 30, siis klasside arv ligikaudu ruutjuur 30-st ehk umbes 5. Ühe klassi laius on .13 / 5 === .026 s. Seega esimene klass .12... .146, teine .147 ... .172, kolmas .173 ... .198, neljas .199 ... .224, viies .225 ... .25.
+
+## Regressioon
+
+y = ax + b
+(y_1 - y_1') ^ 2 + (y_2 - y_2')^2 + ...
+
+## Τακιστθσεδ
+
+R = R_0(1 + α * ΔT)
+ΔT = T - T_0 = t(°C)
+T_0 = 273K
+R = R_0(1 + α *t)
+R = R_0 + R_0 * α *t
+t -> x
+R -> y
+R_0: takistus 0°C juures
+y = kx + b
+y = b + kx
+Joonistada antud andmetele tuginedes graafik R = f(T) ning leida vähimruutude meetodi abil R_0 ja α.
