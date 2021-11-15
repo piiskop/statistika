@@ -151,3 +151,29 @@ ggplot(data = dataAboutVoltage, mapping = aes(x = temperature, y = voltage)) +
   geom_errorbar((aes(ymin = voltage - uncertainty, ymax = voltage + uncertainty)))
 ```
 
+## Lõuna-Šotimaa
+
+Järgnevas tabelis on toodud Lõuna-Šotimaal erinevates kohtades mõõdetud aastane sademete hulk ning vastav mõõtemääramatus. Ülesanne - luua andmete põhjal graafik, millele on märgitud ka mõõtemääramatused. Koostada lineaarse regressiooni mudel.
+
+```{r}
+place = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+height = c(240, 420, 470, 300, 150, 460, 410, 140, 540, 280, 200, 160, 270, 230)
+precipitationsInYear = c(1720, 2050, 1870, 1690, 1250, 2090, 2040, 1460, 1860, 1670, 1490, 900, 1250, 1170)
+measurementUncertaintyForPrecipitationsInyear = c(50, 70, 70, 100, 50, 100, 70, 70, 120, 70, 50, 50, 70, 50)
+precipitations = data.frame(place = place, height = height, precipitationsInYear = precipitationsInYear, measurementUncertaintyForPrecipitationsInyear = measurementUncertaintyForPrecipitationsInyear)
+colnames(precipitations) = c("Koha nr", "Kõrgus merepinnast (m)", "Sademete hulk (mm/aastas)", "Mõõtemääramatus sademete hulga jaoks (mm/aastas)")
+library(kableExtra)
+precipitations %>% kbl(caption = "Lõuna-Šotimaa sademed") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+modelForPrecipitations = lm(precipitationsInYear ~ height, precipitations)
+modelForPrecipitations
+modelForPrecipitations$coefficients[1]
+ggplot(data = precipitations, mapping = aes(x = height, y = precipitationsInYear)) +
+  labs(x = "Kõrgus merepinnast (m)", y = "Sademete hulk (mm/aastas)") +
+  geom_point() +
+  geom_line() +
+  geom_abline(intercept = modelForPrecipitations$coefficients[1], slope = modelForPrecipitations$coefficients[2], color = 3) +
+  stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~"))) +
+  geom_errorbar((aes(ymin = precipitationsInYear - measurementUncertaintyForPrecipitationsInyear, ymax = precipitationsInYear + measurementUncertaintyForPrecipitationsInyear)))
+summaryForPrecipitations = summary(modelForPrecipitations)
+summaryForPrecipitations
+```
