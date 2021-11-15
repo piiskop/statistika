@@ -1,0 +1,153 @@
+---
+title: "Regression"
+author: 'peacecop kalmer:'
+date: "11/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Vaskjuhe
+
+```{r cars}
+temperatures = c(8, 16.5, 23.5, 32, 40.4, 54.5)
+resistancies = c(0.208, 0.213, 0.222, 0.229, 0.232, 0.243)
+temperaturesAndResistancies = data.frame(temperatures = temperatures, resistancies = resistancies)
+statsForTemperaturesResistancies = lm(formula = resistancies ~ temperatures, data = temperaturesAndResistancies)
+summary(statsForTemperaturesResistancies)
+plot(temperaturesAndResistancies$temperatures, temperaturesAndResistancies$resistancies)
+abline(statsForTemperaturesResistancies)
+```
+
+## xy
+
+```{r xy}
+x = c(1:5)
+y = c(2.1, 3.5, 5.4, 6.2, 8.1)
+sizeOfData = length(x)
+sizeOfData
+sumOfX = sum(x)
+sumOfX
+sumOfXY = sum(x*y)
+sumOfXY
+sumOfY = sum(y)
+sumOfY
+sumOfSquaredX = sum(x ^ 2)
+sumOfSquaredX
+slopeManually = (sizeOfData * sumOfXY - sumOfX * sumOfY) / (sizeOfData * sumOfSquaredX - sumOfX ^ 2)
+slopeManually
+interceptManually = (sumOfSquaredX * sumOfY - sumOfX * sumOfXY) / (sizeOfData * sumOfSquaredX - sumOfX ^ 2)
+interceptManually
+xy = data.frame(x = x, y = y)
+statsForXY = lm(formula = y ~ x, data = xy)
+summary(statsForXY)
+library("ggpubr")
+ggscatter(xy, x = "x", y = "y", add = "reg.line", conf.int = TRUE, cor.coef = TRUE, cor.method = "pearson", xlab = "x", ylab = "y")
+shapiro.test(xy$x)
+shapiro.test(xy$y)
+ggqqplot(xy$x, ylab = "x")
+ggqqplot(xy$y, ylab = "y")
+resultOfPearsonCorrelationTest = cor.test(xy$y, xy$x, method = "pearson")
+resultOfPearsonCorrelationTest
+resultOfPearsonCorrelationTest$estimate
+```
+## Sademed
+
+```{r}
+temperatures = c(195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210)
+radarRainRate = c(150, 150, 150, 118, 109, 95, 63, 66, 44, 29, 29, 35, 38, 31, 20, 24)
+precipitants = data.frame(temperature = temperatures, rainRate = radarRainRate)
+#plot(x = precipitants$temperature, y = precipitants$rainRate, type = "o", main = "Vihma intensiivsus", xlab = "Temperatuur (K)", ylab = "Vihma hulk (mm / h)")
+ggplot(data = precipitants, mapping = aes(x = temperature, y = rainRate)) +
+  xlim(180, 230) +
+  geom_point() +
+  geom_smooth() +
+  labs(title = "Vihma intensiivsus", x = "Temperatuur (K)", y = "Vihma hulk (mm / h)") +
+  stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")))
+statsForPrecipitation = lm(formula = rainRate ~ temperature, precipitants)
+summaryForPrecipitation = summary(statsForPrecipitation)
+summaryForPrecipitation
+```
+
+Vihma hulga muutumise kiirus (mm / h / K) on `r round(summaryForPrecipitation$coefficients[2, 1], digits = 1)`.
+
+Nulltemperatuuri korral võiks mudeli järgi olla vihma (mm / h) `r round(summaryForPrecipitation$coefficients[1, 1], digits = 1)`.
+
+Temperatuur, mille korral 0 mm / h sademeid: `r round(abs(summaryForPrecipitation$coefficients[1, 1] / summaryForPrecipitation$coefficients[2, 1]), digits = 1)` K.
+
+Pearsoni koefitsient: `r cor.test(precipitants$rainRate, precipitants$temperature, method = "pearson")$estimate`
+
+Milline on mudeli põhjal vihma tugevus pilve temperatuuril 230 ja 180 K?
+
+230 K korral on vihma tugevus `r round(summaryForPrecipitation$coefficients[2, 1] * 230 + summaryForPrecipitation$coefficient[1, 1], digits = 1)` mm / h.
+
+180 K korral on vihma tugevus `r round(summaryForPrecipitation$coefficients[2, 1] * 180 + summaryForPrecipitation$coefficient[1, 1], digits = 1)` mm / h.
+
+## Hõbedalahus
+
+```{r}
+concentration = c(0, 5, 10, 15, 20, 25, 30)
+absorbance = c(0.02, 0.13, 0.25, 0.39, 0.5, 0.62, 0.76)
+solution = data.frame(concentration = concentration, absorbance = absorbance)
+model0 = lm(absorbance ~ 0 + concentration, solution)
+ggplot(data = solution, mapping = aes(x = concentration, y = absorbance)) +
+  labs(title = "Valge valguse neelduvus lahuses", x = "Lahuse kontsentratsioon (ng / ml) +/- .25 (ng / ml)", y = "Neelduvus (suhtelised ühikud) +/- 5 % näidust") +
+  geom_point() +
+  geom_line() +
+  geom_smooth() +
+  stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~"))) +
+  geom_abline(intercept = 0, slope = coef(model0)[1], color = 3) +
+  geom_errorbar(aes(ymin = absorbance * .95, ymax = absorbance * 1.05)) +
+  geom_errorbarh(aes(xmin = concentration - .25, xmax = concentration + .25))
+statsForSolution = lm(formula = absorbance ~ concentration, solution)
+summaryForSolution = summary(statsForSolution)
+summaryForSolution
+```
+
+tõus: `r round(summaryForSolution$coefficients[2, 1], digits = 3)`
+
+*y*-teljega lõikumise koht: `r round(summaryForSolution$coefficients[1, 1], digits = 3)`
+
+## Fotodiood
+
+Fotodioodi pinge sõltuvus temperatuurist on toodud järgnevas tabelis.
+
+Joonistada graafikule sõltuvuse graafik koos veakastidega. Pinge mõõtemääramatuse leidmiseks tuleb arvestada, et mõõtmisi on sooritatud digitaalse mõõteriistaga, mille täpsus on 5%.
+
+Sellest saab leida piirihälbe ning seejärel mõõtemääramatuse 95 % usaldatavuse korral.
+
+Eeldades, et pinge sõltub temperatuurist lineaarselt, leida lineaarse regressiooni parameetrid koos veahinnanguga.
+
+```{r}
+temperature = c(2, 10, 19, 26.5, 40.5, 49, 59.5, 65, 80, 91.5, 101.5)
+voltage = c(0.686, 0.662, 0.6375, 0.614, 0.59, 0.5415, 0.5175, 0.494, 0.4698, 0.4697, 0.4462)
+dataAboutVoltage = data.frame(temperature = temperature, voltage = voltage)
+statsForVoltage = lm(formula = voltage ~ temperature, dataAboutVoltage)
+summaryForVoltage = summary(statsForVoltage)
+summaryForVoltage
+library(distributions3)
+numberOfTests = length(voltage)
+studentTDistribution = StudentsT(df = numberOfTests - 1)
+halfSuccess = .95 / 2
+studentTFactor = quantile(studentTDistribution, halfSuccess)
+studentTFactorForInfinity = quantile(StudentsT(df = Inf), halfSuccess)
+uncertainty = sqrt((sd(voltage) / sqrt(numberOfTests) * studentTFactor) ^ 2 + (.05 * mean(voltage) * studentTFactorForInfinity / 3) ^ 2 + (halfSuccess * .0001) ^ 2)
+```
+
+tõus: `r round(summaryForVoltage$coefficients[2, 1], digits = 4)`
+
+*y*-teljega lõikumise koht: `r round(summaryForVoltage$coefficients[1, 1], digits = 4)`
+
+```{r}
+ggplot(data = dataAboutVoltage, mapping = aes(x = temperature, y = voltage)) +
+  labs(title = "Fotodioodi pinge sõltuvus temperatuurist", x = "T (°C)", y = "U (V)") +
+  geom_point() +
+  geom_line() +
+  geom_smooth() +
+  stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~"))) +
+  geom_errorbarh(aes(xmin = temperature - .5, xmax = temperature + .5)) +
+  geom_errorbar((aes(ymin = voltage - uncertainty, ymax = voltage + uncertainty)))
+```
+

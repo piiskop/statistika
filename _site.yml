@@ -8,5 +8,7 @@ navbar:
       href: kehade-ruumala-määramine.html
     - text: "Reaktsioonikiiruse määramine"
       href: histogramm.html
+    - text: "Regressioon"
+      href: regression.html
     - text: "Autor"
       href: about.html
