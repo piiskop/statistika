@@ -177,3 +177,24 @@ ggplot(data = precipitations, mapping = aes(x = height, y = precipitationsInYear
 summaryForPrecipitations = summary(modelForPrecipitations)
 summaryForPrecipitations
 ```
+
+## Neeldumine
+
+On antud spektroskoopilised neeldumiskõverad - neeldumise sõltuvus albumiini võ glütsiini kontsentratsioonist. Skitseerida mõlema juhu jaoks lineaarse regressiooni graafikud ning ruutsõltuvuse (2. järku polünoomi) graafikud. Juhul, kui lineaarne sõltuvus sobib, leida lineaarse mudeli parameetrite puhul ka intercept'i ja slope'i standardhälbed. Lisaküsimus - kuidas lisada graafikule veakastid ja millised veakastid peaksid siin olema?
+
+```{r}
+concentration = c(0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20)
+absorbance = c(0, 80.33, 135.7, 207, 243.3, 303, 329, 370.3, 406, 431.7, 444.3)
+albumin = data.frame(concentration = concentration, absorbance = absorbance)
+modelForAlbumin = lm(formula = absorbance ~ concentration + 0, data = albumin)
+modelForAlbumin
+ggplot(data = albumin, mapping = aes(x = concentration, y = absorbance)) +
+  labs(x = "Kontnsentratsioon c", y = "Neelduvus N") +
+  geom_point() +
+  geom_line() +
+  geom_abline(intercept = 0, slope = modelForAlbumin$coefficients[1], color = 3) +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2), fill = "firebrick") +
+  stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = y ~ poly(x, 2) + x + 0)
+library(basicTrendline)
+trendline(concentration,absorbance,model="line3P",summary=TRUE,eDigit=4)
+```
