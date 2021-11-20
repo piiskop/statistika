@@ -186,15 +186,48 @@ On antud spektroskoopilised neeldumiskõverad - neeldumise sõltuvus albumiini v
 concentration = c(0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20)
 absorbance = c(0, 80.33, 135.7, 207, 243.3, 303, 329, 370.3, 406, 431.7, 444.3)
 albumin = data.frame(concentration = concentration, absorbance = absorbance)
-modelForAlbumin = lm(formula = absorbance ~ concentration + 0, data = albumin)
+modelForAlbumin = lm(formula = absorbance ~ -1 + I(concentration ^ 2) + concentration, data = albumin)
 modelForAlbumin
+linearModelForAlbumin = lm(formula = absorbance ~ concentration, data = albumin)
+linearModelForAlbumin
+summaryForAlbumin = summary(linearModelForAlbumin)
+summaryForAlbumin
 ggplot(data = albumin, mapping = aes(x = concentration, y = absorbance)) +
   labs(x = "Kontnsentratsioon c", y = "Neelduvus N") +
   geom_point() +
   geom_line() +
-  geom_abline(intercept = 0, slope = modelForAlbumin$coefficients[1], color = 3) +
-  geom_smooth(method = "lm", formula = y ~ poly(x, 2), fill = "firebrick") +
-  stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = y ~ poly(x, 2) + x + 0)
-library(basicTrendline)
-trendline(concentration,absorbance,model="line3P",summary=TRUE,eDigit=4)
+  geom_smooth(method = "lm", formula = y ~ -1 + x, fill = "orange") +
+  geom_smooth(method = "lm", formula = y ~ -1 + I(x ^ 2) + x, fill = "firebrick") +
+  stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = y ~ -1 + x, label.x = 3, label.y = 34) +
+  stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = y ~ -1 + I(x ^ 2) + x)
 ```
+
+Suvalist [regressioonigraafikut saab arvutada ka käsitsi](http://polynomialregression.drque.net/math.html). See oleks huvitav kunagi läbi teha.
+
+## Takistused
+
+Pooljuhi takistus on läbi pooljuhi mineva voolu tugevuse funktsioon *R=f(I)*. Eeldame, et see seos on järgmine: $R=k\cdotI^{n}$. Joonistada graafik, logaritmiline graafik. Leida konstandid *k* ja *n*.
+
+```{r}
+i = c(.001, .002, .004, .008, .016, .032, .064, .13, .26, .52)
+r = c(.0006, .0022, .0063, .02, .042, .12, .34, 1.1, 3.2, 9.5)
+resistancies = data.frame(i = i, r = r)
+colnames(resistancies) = c("I(A)", "R(Ω)")
+resistancies %>% kbl(caption = "Takistused") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+modelForResistancies = lm(log(r) ~ log(i))
+summary(modelForResistancies)
+ggplot(data = resistancies, mapping = aes(x = i, y = r)) +
+  labs(x = "I(A)", y = "R(Ω)") +
+  geom_point() +
+  geom_line() +
+  geom_smooth() +
+  scale_x_log10(limits = c(1e-3, 1)) +
+  scale_y_log10(limits = c(1e-4, 10)) +
+  theme_bw() +
+  annotation_logticks() +
+  stat_function(fun = function (x) exp(coef(modelForResistancies)[1]) * x ^ coef(modelForResistancies)[2], color = "red")
+```
+
+*k*: `r exp(coef(modelForResistancies)[1])`
+
+*n*: `r coef(modelForResistancies)[2]`
