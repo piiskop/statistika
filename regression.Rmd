@@ -2,7 +2,12 @@
 title: "Regression"
 author: 'peacecop kalmer:'
 date: "11/9/2021"
-output: html_document
+output:
+  html_document:
+    md_extensions: +link_attributes
+    toc: TRUE
+    toc_float: TRUE
+bibliography: references.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -260,3 +265,153 @@ ggplot(data = halfLogarithmics, mapping = aes(x = x, y = z)) +
 $$z=`r round(exp(modelForHalfLogarithmics$coefficients[1]), digits = 4)`*10^{`r round(modelForHalfLogarithmics$coefficients[2], digits = 4)`*x}$$
 
 $$R^{2}=`r summaryForModelForHalfLogarithmics$r.squared`$$
+
+## CaCO
+
+Tabelis on toodud süsteemi - CaCO tahkis-vedelik-gaas tasakaalulised kontsentratsioonid ja vedeliku happelisuse tasemed. Teha a) graafik I veerg vs viimane veerg, b) teine veerg vs viimane veerg. Tavalises ja poollogaritmilises teljestikus. Leida võimalusel sobiv fit-funktsioon. Üks võte numbrite sisestamisel. Nt 8.08*10^-7 on tabelis kujul 9.08E-07 ning 2.37*10^4 on kujul 2.37E04
+
+```{r tableForSolidFluidGas}
+ppmCo2 = c(0.000000808, 0.0000255, 0.000295, 0.00295, 0.0295, 0.295, 0.692, 2.95, 29.5, 88.5, 295, 390, 885, 2950, 23700)
+mmolLCo2 = c(2.74E-11, 8.66E-10, 0.00000001, 0.0000001, 0.000001, 0.00001, 0.0000235, 0.0001, 0.001, 0.003, 0.01, 0.0132, 0.03, 0.1, 0.802)
+mmolLCox = c(0.000566, 0.00187, 0.00455, 0.0111, 0.029, 0.0748, 0.103, 0.173, 0.375, 0.541, 0.812, 0.893, 1.19, 1.82, 4.25)
+mmolLCa = c(5.05, 1.6, 0.71, 0.33, 0.17, 0.11, 0.1, 0.12, 0.2, 0.28, 0.41, 0.44, 0.58, 0.86, 1.73)
+pH = c(12, 11.5, 11.15, 10.81, 10.46, 10.06, 9.88, 9.54, 8.92, 8.61, 8.27, 8.19, 7.95, 7.6, 7)
+solidFluidGas = data.frame(ppmCo2 = ppmCo2, mmolLCo2 = mmolLCo2, mmolLCox = mmolLCox, mmolLCa = mmolLCa, pH = pH)
+colnames(solidFluidGas) = c("$P(CO_{2})_{G}, ppm$", "$[CO_{2}]_{W}, mmol/L$", "$\\sum[CO_{X}]_{W}, mmol/L$", "$[Ca^{2+}], mmol/L$", "pH")
+solidFluidGas %>% kbl(caption = "Equilibrium concentrations of $[CO_{2}]_{W}$, $HC_{3}^{-}$, and $Ca^{2+}$ and pH in the system of gas-water-solid $CaCO_{3}$ at $t = 25 °C$. Boldface designates extremal of $Ca^{2+}$ and $CO_{3}^{2-}$ at $[CO_{2}]_{W}\\cong2.35\\times10^{-5} mmol/L$") %>% kable_styling(bootstrap_options = c("striped", "hover")) %>% row_spec(7, bold=T)
+modelForCo2 = lm(pH ~ log(mmolLCo2))
+modelForCo2
+summaryForModelForCo2 = summary(modelForCo2)
+summaryForModelForCo2
+ggplot(data = solidFluidGas, mapping = aes(x = mmolLCo2, y = pH)) +
+  labs(x = "CO2/mmol/L", y = "pH") +
+  geom_point() +
+  geom_line() +
+  ylim(6, NA) +
+  annotation_logticks(sides ="tb") +
+  scale_x_log10(limits = c(.00000000001, 1))
+```
+
+pH sõltuvus CO_2_'st:
+
+$$z=`r round(modelForCo2$coefficients[2], digits = 4)`*ln(x)+{`r round(modelForCo2$coefficients[1], digits = 4)`}$$
+
+$$R^{2}=`r summaryForModelForCo2$r.squared`$$
+
+```{r}
+modelForCox = lm(pH ~ log(mmolLCox))
+modelForCox
+summaryForModelForCox = summary(modelForCox)
+summaryForModelForCox
+ggplot(data = solidFluidGas, mapping = aes(x = mmolLCox, y = pH)) +
+  labs(x = "COx/mmol/L", y = "pH") +
+  geom_point() +
+  geom_line() +
+  ylim(6, NA) +
+  stat_function(fun = function (x) coef(modelForCox)[2] * log(x) + coef(modelForCox)[1], color = "red") +
+  scale_x_log10(limits = c(.0001, 10))
+
+```
+
+pH sõltuvus CO_X_'st:
+
+$$z=`r round(modelForCox$coefficients[2], digits = 4)`*ln(x)+{`r round(modelForCox$coefficients[1], digits = 4)`}$$
+
+$$R^{2}=`r summaryForModelForCox$r.squared`$$
+
+```{r}
+ggplot(data = solidFluidGas, mapping = aes(x = mmolLCa, y = pH)) +
+  labs(x = "Ca2+/mmol&L", y = "pH") +
+  #geom_point() +
+  geom_line() 
+  #ylim(6, NA) +
+  #geom_smooth() +
+  #stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = log(z) ~ x)+
+  #stat_function(fun = function (x) coef(modelForCox)[2] * log(x) + coef(modelForCox)[1], color = "red") +
+  #annotation_logticks(sides ="tb") +
+  #scale_x_log10(limits = c(.0001, 10))
+
+```
+
+## Eksponentsiaalne sõltuvus
+
+### Ülesande püstitus
+
+Leida järgnevatest kaks andmerida:
+
+- inimkonna arvukuse kasv
+
+- nafta kulutamine (aastas)
+
+- energia kulutamine (aastas)
+
+- CO2 aastane emissioon (aastas)
+
+kogu maailma kohta.
+
+Teha nende kahe valitud andmejada kohta graafikud ning leida eksponentsiaalse sõltuvuse funktsioonid graafiku järgi (Trendline abil).
+
+Teha nende kahe andmejada kohta korrelatsioonanalüüs - näiteks CO-2 y-teljel ja nafta kulutamine x-teljel.
+
+Tuleb arvestada, et nt nafta tootmine või CO2 emissioon hakkas eksponentsiaalselt kasvama alles industriaalajastuga, siis peaks aja jaoks tegema ümber arvutuse. Nt tähistama aasta 1900 0-ks. 1910 oleks siis aasta 10 jne.
+
+### Algandmed
+
+```{r}
+year = c(1950, 1951, 1952, 1953, 1954, 1955, 1956, 1957, 1958, 1959, 1960, 1961, 1962, 1963, 1964, 1965, 1966, 1967, 1968, 1969, 1970, 1971, 1972, 1973, 1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020)
+
+population=c(2536431,2584034,2630862,2677609,2724847,2773020,2822443,2873306,2925687,2979576,3034950,3091844,3150421,3211001,3273978,3339584,3407923,3478770,3551599,3625681,3700437,3775760,3851651,3927781,4003794,4079480,4154667,4229506,4304534,4380506,4458003,4536997,4617387,4699569,4784012,4870922,4960568,5052522,5145426,5237441,5327231,5414289,5498920,5581598,5663150,5744213,5824892,5905046,5984794,6064239,6143494,6222627,6301773,6381185,6461159,6541907,6623518,6705947,6789089,6872767,6956824,7041194,7125828,7210582,7295291,7379797,7464022,7547859,7631091,7713468,7794799)
+
+co2Emissions = c(5998250390, 6374254691, 6460339682, 6641273014, 6784215194, 7436238817, 7917168948, 8178702419, 8411438653, 8847900121, 9359426482, 9388244087, 9719779635, 10239773013, 10793877121, 11282700958, 11829640492, 12205845914, 12871319383, 13724862841, 14853217232, 15453605261, 16173079951, 17027165013, 16957206737, 16999328068, 17933956104, 18444838983, 19016691375, 19557553854, 19444411140, 18980238345, 18830746953, 18949762962, 19604480685, 20262211219, 20559974625, 21191788543, 22012236539, 22320123319, 22749574361, 23238102148, 22569624280, 22803495350, 22964583360, 23453944453, 24154961205, 24300550431, 24206271270, 24518962289, 25234207250, 25451054499, 26039191478, 27366723290, 28627533035, 29602777195, 30583530082, 31493741589, 32069444008, 31607042411, 33343300453, 34468451046, 34974075146, 35283025442, 35534442951, 35496406338, 35452459300, 35925737688, 36646139785, 36702502902, 34807259099)
+
+world = data.frame(year = year, population = population, co2Emissions = co2Emissions)
+library(htmltools)
+colnames(world) = c("Aasta", "Tuhat inimest [@people]", '$CO_{2}$ emissioone (t / y) [@owidenergy]')
+
+world %>% kbl(caption = "Maailma inimeste arv ja süsinikdioksiidi aastane emissioon aastates 1950 - 2020 seisuga 20211120", longtable = T, booktabs = T) %>% kable_styling(bootstrap_options = c("striped", "hover"), latex_options = c("repeat_header"))
+```
+
+### Lahendus
+
+```{r}
+ggplot(data = world, mapping = aes(x = population, y = co2Emissions)) +
+labs(x = "Tuhat inimest", y = bquote(CO[2] ~ 'emissioone (t / y)')) +
+  geom_point() +
+  geom_line() +
+  #ylim(6, NA) +
+  geom_smooth() +
+  stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = co2Emissions ~ population)
+  #stat_function(fun = function (x) coef(modelForCox)[2] * log(x) + coef(modelForCox)[1], color = "red") +
+  #annotation_logticks(sides ="tb") +
+  #scale_x_log10(limits = c(.0001, 10))
+modelForWorld = lm(co2Emissions ~ population)
+summaryForModelForWorld = summary(modelForWorld)
+summaryForModelForWorld
+```
+
+Inimeste arvu suurenemine maailmas ja süsinikdioksiidi heitmete suurenemine maailmas oli aastail 1950 - 2020 tugevas lineaarses seoses. Kuna seos on lineaarne, siis pole mõtet aretada eksponentsiaalset graafikut.
+
+Uurin eraldi sõltuvust inimeste populatsiooni ja aja vahel:
+
+```{r}
+ggplot(data = world, mapping = aes(x = year, y = population)) +
+labs(x = "Aasta", y = "Tuhat inimest") +
+  geom_point() +
+  geom_line() +
+  #ylim(6, NA) +
+  geom_smooth() +
+  stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = population ~ year)
+  #stat_function(fun = function (x) coef(modelForCox)[2] * log(x) + coef(modelForCox)[1], color = "red") +
+  #annotation_logticks(sides ="tb") +
+  #scale_x_log10(limits = c(.0001, 10))
+modelForPopulation = lm(population ~ year)
+summaryForModelForPopulation = summary(modelForPopulation)
+summaryForModelForPopulation
+
+```
+
+Inimeste arvu suurenemine on otseses sõltuvuses ajakulgust. Kuna inimeste arvu kasv on otseses sõltuvuses aja kulgust ja inimeste arvuga korreleerub tugevasti süsinikdioksiidi heitmete mass, siis on järelikult ka vähemalt tugev lineaarne sõltuvus aja kulgu ja süsinikdioksiidi heitmete massi vahel. Nii et valitud andmeridade vahel ei ole eksponentsiaalset seost.
+
+Kui surfata lehel, kust pärinevad süsinikdioksiidi heitmete arvud [@owidenergy], leiame sealt graafiku energiatarbimise kohta, mis ei erine käsitletavas ajavahemikus teistest käsitletud graafikutest - korrelatsioon on tugevalt lineaarne ajaga. Sama paistab ka fossiilsete kütuste tarbimise kohta.
+
+Võiks muidugi võtta pikema ajavahemiku ja nautida näiliselt eksponentsiaalset seost. Ometi oleks see petlik, sest kuigi graafikute tõus on enne 1950. aastat oluliselt väiksem, tähendab see siiski vaid n-ö käivitusaega ja kui juba käivitamine on toimunud, on kulgemine toimunud lineaarselt. See üllatab mind, sest arvasin ka varem, et rahvaarv kasvab eksponentsiaalselt. Selgus, et see polegi nii.
