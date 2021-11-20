@@ -231,3 +231,32 @@ ggplot(data = resistancies, mapping = aes(x = i, y = r)) +
 *k*: `r exp(coef(modelForResistancies)[1])`
 
 *n*: `r coef(modelForResistancies)[2]`
+
+## Poollogaritmika
+
+Tabelis on toodud andmed seose $z=a*10^{b*x}$. Leida konstandid *a* ja *b* ning joonistada graafik tavalises ja poollogaritmilises teljestikus.
+
+```{r}
+x = c(.1, .2, .4, .6, 1, 1.5, 1.8, 2, 2.2, 2.5, 3.2, 4)
+z = c(2.4, 2.75, 3, 3.4, 4.1, 5.7, 6.8, 7.5, 8.8, 10.1, 15, 24)
+halfLogarithmics = data.frame(x = x, z = z)
+halfLogarithmics %>% kbl(caption = "Poollogaritmika") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+modelForHalfLogarithmics = lm(log(z) ~ x)
+modelForHalfLogarithmics
+summaryForModelForHalfLogarithmics = summary(modelForHalfLogarithmics)
+summaryForModelForHalfLogarithmics
+ggplot(data = halfLogarithmics, mapping = aes(x = x, y = z)) +
+  labs(x = "x", y = "z") +
+  geom_point() +
+  geom_line() +
+  geom_smooth() +
+  #stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = log(z) ~ x)+
+  labs(title = paste()) +
+  stat_function(fun = function (x) exp(coef(modelForHalfLogarithmics)[1]) * exp(coef(modelForHalfLogarithmics)[2]) * x, color = "red") +
+  annotation_logticks() +
+  scale_y_log10(limits = c(1, 100))
+```
+
+$$z=`r round(exp(modelForHalfLogarithmics$coefficients[1]), digits = 4)`*10^{`r round(modelForHalfLogarithmics$coefficients[2], digits = 4)`*x}$$
+
+$$R^{2}=`r summaryForModelForHalfLogarithmics$r.squared`$$
