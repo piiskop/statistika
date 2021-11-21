@@ -448,10 +448,9 @@ population1=c(814000, 990000, 1263000, 1654000, 2536431, 6143494)
 co2Emissions1 = c(9350528, 28091888, 196896032, 1952224654, 6003238189, 25234207250)
 
 world1 = data.frame(year = year1, population = population1, co2Emissions = co2Emissions1)
-library(htmltools)
-colnames(world1) = c("Aasta", "Tuhat inimest [@people] [@population]", '$CO_{2}$ emissioone (t / y) [@owidenergy] [@co2')
+colnames(world1) = c("Aasta", "Tuhat inimest [@people] [@population]", '$CO_{2}$ emissioone (t / y) [@owidenergy] [@co2]')
 
-world1 %>% kbl(caption = "Maailma inimeste arv ja süsinikdioksiidi aastane emissioon aastates 1750 - 2020 seisuga 20211121", longtable = T, booktabs = T) %>% kable_styling(bootstrap_options = c("striped", "hover"), latex_options = c("repeat_header"))
+world1 %>% kbl(caption = "Maailma inimeste arv ja süsinikdioksiidi aastane emissioon aastates 1750 - 2020 seisuga 20211121") %>% kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
 ### Lahendus täiendatud algandmetega
@@ -480,7 +479,7 @@ Uurin eraldi sõltuvust inimeste populatsiooni ja aja vahel:
 ```{r}
 modelForPopulation1 = lm(log(population1) ~ year1)
 ggplot(data = world1, mapping = aes(x = year1, y = population1)) +
-  labs(x = "Aasta", y = "Tuhat inimest") +
+  labs(x = "Aasta", y = "log(Tuhat inimest)") +
   geom_point() +
   geom_line() +
   #ylim(6, NA) +
@@ -501,7 +500,7 @@ Uurin eraldi sõltuvust süsinikdioksiidi emissioonide ja aja vahel:
 ```{r}
 modelForCo2Emissions1 = lm(log(co2Emissions1) ~ year1)
 ggplot(data = world1, mapping = aes(x = year1, y = co2Emissions1)) +
-  labs(x = "Aasta", y = "Süsinikdioksiidi emissioone (t)") +
+  labs(x = "Aasta", y = "Süsinikdioksiidi emissioone (log(t))") +
   geom_point() +
   geom_line() +
   #ylim(6, NA) +
@@ -516,3 +515,128 @@ summaryForModelForCo2Emissions1
 ```
 
 R ruudus on .9891, kui lineariseerida graafik selliselt, et ordinaattelg logaritmida. Seega on seos aja kulgu ja süsinikdioksiidi emissioonide suurenemise vahel maailmas niimoodi tugev.
+
+Nii et ühe ajaühiku kohta ajavahemikus 1950 - 2020 suurenesid nii inimeste arv maailmas kui süsinikdioksiidi heitmete mass eksponentsiaalselt, kuigi omavahel on nendel lineaarne sõltuvus.
+
+## Pendel
+
+Alljärgnevas tabelis on toodud matemaatilise pendli (niidi otsa riputtatud kuulike) võnkeperioodi T sõltuvus pendli pikkusest l.
+
+Arvestades, et matemaatilise pendli võnkeperiood sõltub pendli pikkusest järgmiselt:
+
+$$T=2\pi*\sqrt{\frac{l}{g}}$$
+
+Selleks
+
+a) joonistage graafik, tähistades ka veakastid arvestades, et pikkuse mõõtmise Jaoks on viga 0,01m ning aja jaoks 0,01s. Lisage joonisele ka telgede tähistused,
+
+b) tehke tabelisse uus veerg, x = sqrt{l}. Sel juhul
+
+$$T=\frac{2*\pi}{\sqrt{g}}*x\equiv k*x$$
+
+c) Skitseerige graafik ka uue sõltuvuse, T = k * x jaoks, leidke sellest tõus 'slope' ning selel abil g.
+
+d) Teine võimalus, võttes mõlemad pooled ruutu saame seose:  $T^{2}=\frac{4*\pi^{2}}{g}*l$ Võttes y=T^2^ saame ka sin lineaarse seose. Ülesanne: Leida antud juhul seosest y = k * l abil esmalt ka ja siis g.
+
+```{r}
+l = c(.2, .25, .28, .32, .37, .4, .52)
+t = c(.9, 1.01, 1.06, 1.13, 1.23, 1.27, 1.46)
+pendulum = data.frame(l = l, t = t)
+colnames(pendulum) = c("l (m)", "T (s)")
+
+pendulum %>% kbl(caption = "Matemaatilise pendli võnkeperioodi <i>T</i> sõltuvus pendli pikkusest <i>l</i>") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+
+ggplot(data = pendulum, mapping = aes(x = l, y = t)) +
+  labs(x = "l(m)", y = "T(s)") +
+  geom_point() +
+  geom_line() +
+  geom_smooth() +
+  annotation_logticks(sides ="lr")
+
+xForPendulum = sapply(l, function(l) round(sqrt(l), digits = 3))
+pendulum$xForPendulum = xForPendulum
+colnames(pendulum) = c("l (m)", "T (s)", "x=sqrt(l)")
+
+pendulum %>% kbl(caption = "Matemaatilise pendli võnkeperioodi <i>T</i> sõltuvus pendli pikkusest <i>l</i> lisamuutujaga") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+
+modelForPendulum = lm(t ~ xForPendulum)
+
+formula = y ~ xForPendulum
+
+k = coef(modelForPendulum)[2]
+
+library(ggpmisc)
+ggplot(data = pendulum, mapping = aes(x = xForPendulum, y = t)) +
+  labs(x = "x=sqrt(l)", y = "T(s)") +
+  geom_point() +
+  geom_line() +
+  geom_smooth() +
+  stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = formula) +
+  stat_poly_eq(eq.with.lhs = "t~`=`~", eq.x.rhs = "~x", aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), parse = TRUE, formula = formula) +
+  stat_function(fun = function (xForPendulum) k * xForPendulum + coef(modelForPendulum)[1], color = "red") +
+  annotation_logticks(sides ="lr")
+
+```
+
+*k* = `r k`
+
+*g* = `r round(4 * pi ^ 2 / k ^ 2, digits = 3)`
+
+Pärast seda, kui sundida trendijoon läbi junni, on konstantide väärtused sellised:
+
+```{r}
+
+modelForPendulumWithForced0 = lm(t ~ xForPendulum - 1)
+
+formulaWithForced0 = y ~ xForPendulum - 1
+
+kWithForced0 = coef(modelForPendulumWithForced0)[1]
+
+ggplot(data = pendulum, mapping = aes(x = xForPendulum, y = t)) +
+  labs(x = "x=sqrt(l)", y = "T(s)") +
+  geom_point() +
+  geom_line() +
+  #ylim(6, NA) +
+  geom_smooth() +
+  stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = formulaWithForced0) +
+  stat_poly_eq(eq.with.lhs = "t~`=`~", eq.x.rhs = "~x", aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), parse = TRUE, formula = formulaWithForced0) +
+  stat_function(fun = function (xForPendulum) kWithForced0 * xForPendulum, color = "red") +
+  annotation_logticks(sides ="lr")
+  #scale_x_log10() 
+  #scale_y_log10()
+
+kWithForced0
+modelForPendulumWithForced0
+summaryForModelForPendulumWithForced0 = summary(modelForPendulumWithForced0)
+summaryForModelForPendulumWithForced0
+standardDeviationForK = coef(summaryForModelForPendulumWithForced0)[, 2]
+f=expression(4 * pi^2 / kForDerivative ^ 2)
+derivative = D(f, "kForDerivative")
+derivative
+kForDerivative = kWithForced0
+abs(eval(derivative)) * standardDeviationForK
+gWithForced0 = round(4 * pi ^ 2 / kWithForced0 ^ 2, digits = 3)
+standardDeviationForG = abs(eval(derivative)) * standardDeviationForK
+
+library(distributions3)
+numberOfMeasurements = nrow(pendulum)
+studentTDistribution = StudentsT(df = numberOfMeasurements - 1)
+studentTDistribution
+studentTFactor = quantile(studentTDistribution, 1 - .05 / 2)
+studentTFactor
+
+```
+
+*k* = `r kWithForced0`
+
+*g* = `r gWithForced0`
+
+*k* standardhälve: `r standardDeviationForK`
+
+*g* standardhälve: `r standardDeviationForG`
+
+minimaalne *g*: `r gWithForced0 - standardDeviationForG`
+
+maksimaalne *g*: `r gWithForced0 + standardDeviationForG`
+
+*Δ g*: `r standardDeviationForG / sqrt(numberOfMeasurements) * studentTFactor`
