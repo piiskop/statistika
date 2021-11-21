@@ -323,10 +323,10 @@ $$R^{2}=`r summaryForModelForCox$r.squared`$$
 ggplot(data = solidFluidGas, mapping = aes(x = mmolLCa, y = pH)) +
   labs(x = "Ca2+/mmol&L", y = "pH") +
   #geom_point() +
-  geom_line() 
+  geom_line() +
   #ylim(6, NA) +
-  #geom_smooth() +
-  #stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = log(z) ~ x)+
+  geom_smooth() +
+  stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")))
   #stat_function(fun = function (x) coef(modelForCox)[2] * log(x) + coef(modelForCox)[1], color = "red") +
   #annotation_logticks(sides ="tb") +
   #scale_x_log10(limits = c(.0001, 10))
@@ -415,3 +415,104 @@ Inimeste arvu suurenemine on otseses sõltuvuses ajakulgust. Kuna inimeste arvu 
 Kui surfata lehel, kust pärinevad süsinikdioksiidi heitmete arvud [@owidenergy], leiame sealt graafiku energiatarbimise kohta, mis ei erine käsitletavas ajavahemikus teistest käsitletud graafikutest - korrelatsioon on tugevalt lineaarne ajaga. Sama paistab ka fossiilsete kütuste tarbimise kohta.
 
 Võiks muidugi võtta pikema ajavahemiku ja nautida näiliselt eksponentsiaalset seost. Ometi oleks see petlik, sest kuigi graafikute tõus on enne 1950. aastat oluliselt väiksem, tähendab see siiski vaid n-ö käivitusaega ja kui juba käivitamine on toimunud, on kulgemine toimunud lineaarselt. See üllatab mind, sest arvasin ka varem, et rahvaarv kasvab eksponentsiaalselt. Selgus, et see polegi nii.
+
+### Arutelu õpetajaga
+
+Ajaperiood ongi liiga lühike. Eksponentsiaalne kasv eeldab piiramatuid resursse. Või piiramatult kasutusele võetavaid resursse. Lühikest ajaperioodi saab alati lineaarse kasvuga sobitada. Ja eksponentfunktsiooni graafikut saab alati mingis ajaperioodis lineaarsega lähendada.
+Ning seaduste, reeglitega nt rahvaarvu kasvu piirata. Või sõdadega. Või suurendada, nt antibiootikumide kasutuselevõtt tõstis inimeste arvukuse kasvamise kiirust oluliselt.
+Aga võttes aluseks nt inimkonna arvukuse modelleerimisel või matemaaeksponentsialse kasvu vs lineaarne, sõltub sellest, millest on inimeste arvu kasv tingitud.
+Eksponentsiaalne kasv on juhul kui varusid on piiramatult ning aastas juurdetulevate inimeste arv sõltub olemasolevate arvust. Nt iga miljoni inimese kohta 1000 inimest juurde, seega 10 miljoni kohta 10000 inimest juurde, 1 miljardi kohta aastas juurdekasv 1 miljon. Jne.
+Lineaarne kasv arvestab, et juurdesündivate inimeste arv ei sõltu olemasolevate arvust. See võiks juhtuda kui varusid on piiratud või pannakse mingiks ajaperioodiks paika reeglid, mille rakendamisel surutakse inimeste arvu kasv maha. Kui nt Eestis iive on null, siis sobib lineaarse kasvu mudel väga hästi. Eksponentsiaalse oma sobiks siis kah.
+
+Demograafia tegeleb eraldi nende faktoritega erinevates rikides, maailmajagudes ja maailmas tervikuna.
+
+Parimat,
+Tõnu Laas
+
+On Sat, Nov 20, 2021 at 10:56 PM peacecop kalmer: <kalmer@test.tennis24.ee> wrote:
+Tegin analüüsi ära. Kõige enam aega kulus algandmete otsimisele ja mõningate tehniliste lahenduste otsimisele, mis puudutab "Bookdown"'i "RStudio"'s. Palun vaata mu lahendust aadressilt http://statistika.tennis24.ee/regression.html#Eksponentsiaalne_s%C3%B5ltuvus Ülesande lahendus on lehe lõpuosas. Vasakult menüüst saad valida "Eksponentsiaalse sõltuvuse". Võiksid pilgu ka "Poollogaritmikale" ja "CaCO"'le peale visata, et kas need tulemis on sellised, nagu sa ootasid.
+
+Mul pole mõtet mitte ühtki faili üles laadida, kuna kõik on seal lehel näha ja ma ei püüdnudki tabelarvutusprogrammis sellega seekord tegeleda.
+
+Ei tule kuidagi realistlikku eksponentsiaalset seost nende andmetega, kui me just end ei peta. Eksponentsiaalne seos tähendaks, et ka nt ajavahemikus 2000 - 2020 iga aasta kohta suurenes miski järjest rohkem. Aga tuli välja, et suurenes alati ühepalju. Muidugi võiks arendada mingi multigraafiku, mille algus on eksponentsiaalne, praegune osa lineaarne, ometi kui midagi ennustada, siis pigem lineaarse jupi alusel, mis on juba 70 aastat püsinud.
+
+### Täiendatud algandmed
+
+Kuna maailma rahvaarvu kohta pole nii täpseid andmeid 1950. aastast varasema aja kohta kui alates 1950. aastast, käsitlen täiendatud algandmeid alates aastast 1750 intervalliga 50 aastat:
+
+```{r}
+year1 = c(1750, 1800, 1850, 1900, 1950, 2000)
+
+population1=c(814000, 990000, 1263000, 1654000, 2536431, 6143494)
+
+co2Emissions1 = c(9350528, 28091888, 196896032, 1952224654, 6003238189, 25234207250)
+
+world1 = data.frame(year = year1, population = population1, co2Emissions = co2Emissions1)
+library(htmltools)
+colnames(world1) = c("Aasta", "Tuhat inimest [@people] [@population]", '$CO_{2}$ emissioone (t / y) [@owidenergy] [@co2')
+
+world1 %>% kbl(caption = "Maailma inimeste arv ja süsinikdioksiidi aastane emissioon aastates 1750 - 2020 seisuga 20211121", longtable = T, booktabs = T) %>% kable_styling(bootstrap_options = c("striped", "hover"), latex_options = c("repeat_header"))
+```
+
+### Lahendus täiendatud algandmetega
+
+```{r}
+ggplot(data = world1, mapping = aes(x = population1, y = co2Emissions1)) +
+  labs(x = "Tuhat inimest", y = bquote(CO[2] ~ 'emissioone (t / y)')) +
+  geom_point() +
+  geom_line() +
+  #ylim(6, NA) +
+  geom_smooth()
+  #stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = co2Emissions1 ~ population1) 
+  #stat_function(fun = function (x) coef(modelForCox)[2] * log(x) + coef(modelForCox)[1], color = "red") +
+  #annotation_logticks(sides ="tb") +
+  #scale_x_log10() 
+  #scale_y_log10()
+modelForWorld1 = lm(co2Emissions1 ~ population1)
+summaryForModelForWorld1 = summary(modelForWorld1)
+summaryForModelForWorld1
+```
+
+Nagu graafikult näha, ei olnud perioodi pikendamine abiks ja graafik kinnitab mu eelnevat juttu, et jalgrattaga sõitma hakates toimub kiirendamine aeglasemalt, misjärel kiiremini, misjärel on kiirus ühtlane. Kui muuta see graafik logaritmiliseks, ei teki lineariseeritust.
+
+Uurin eraldi sõltuvust inimeste populatsiooni ja aja vahel:
+
+```{r}
+modelForPopulation1 = lm(log(population1) ~ year1)
+ggplot(data = world1, mapping = aes(x = year1, y = population1)) +
+  labs(x = "Aasta", y = "Tuhat inimest") +
+  geom_point() +
+  geom_line() +
+  #ylim(6, NA) +
+  geom_smooth() +
+  #stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = log(population1) ~ year1) +
+  stat_function(fun = function (x) exp(coef(modelForPopulation1)[1]) * exp(coef(modelForPopulation1)[2] * x), color = "red") +
+  #annotation_logticks(sides ="tb") +
+  #scale_x_log10() 
+  scale_y_log10()
+summaryForModelForPopulation1 = summary(modelForPopulation1)
+summaryForModelForPopulation1
+```
+
+R ruudus on .91, kui lineariseerida graafik selliselt, et ordinaattelg logaritmida. Seega on seos aja kulgu ja inimeste hulga suurenemise vahel maailmas niimoodi tugev.
+
+Uurin eraldi sõltuvust süsinikdioksiidi emissioonide ja aja vahel:
+
+```{r}
+modelForCo2Emissions1 = lm(log(co2Emissions1) ~ year1)
+ggplot(data = world1, mapping = aes(x = year1, y = co2Emissions1)) +
+  labs(x = "Aasta", y = "Süsinikdioksiidi emissioone (t)") +
+  geom_point() +
+  geom_line() +
+  #ylim(6, NA) +
+  geom_smooth() +
+  #stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = log(population1) ~ year1) +
+  stat_function(fun = function (x) exp(coef(modelForCo2Emissions1)[1]) * exp(coef(modelForCo2Emissions1)[2] * x), color = "red") +
+  annotation_logticks(sides ="lr") +
+  #scale_x_log10() 
+  scale_y_log10()
+summaryForModelForCo2Emissions1 = summary(modelForCo2Emissions1)
+summaryForModelForCo2Emissions1
+```
+
+R ruudus on .9891, kui lineariseerida graafik selliselt, et ordinaattelg logaritmida. Seega on seos aja kulgu ja süsinikdioksiidi emissioonide suurenemise vahel maailmas niimoodi tugev.
