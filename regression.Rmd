@@ -4,13 +4,16 @@ author: 'peacecop kalmer:'
 date: "11/9/2021"
 output:
   html_document:
-    md_extensions: +link_attributes
-    toc: TRUE
-    toc_float: TRUE
+    toc: yes
+    toc_float: yes
+  bookdown::pdf_document2:
+    toc: yes
+    latex_engine: lualatex
 bibliography: references.bib
 ---
 
 ```{r setup, include=FALSE}
+options(tinytex.verbose = TRUE)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -134,9 +137,11 @@ summaryForVoltage = summary(statsForVoltage)
 summaryForVoltage
 library(distributions3)
 numberOfTests = length(voltage)
+numberOfTests
 studentTDistribution = StudentsT(df = numberOfTests - 1)
 halfSuccess = .95 / 2
 studentTFactor = quantile(studentTDistribution, halfSuccess)
+studentTFactor
 studentTFactorForInfinity = quantile(StudentsT(df = Inf), halfSuccess)
 uncertainty = sqrt((sd(voltage) / sqrt(numberOfTests) * studentTFactor) ^ 2 + (.05 * mean(voltage) * studentTFactorForInfinity / 3) ^ 2 + (halfSuccess * .0001) ^ 2)
 ```
@@ -211,7 +216,7 @@ Suvalist [regressioonigraafikut saab arvutada ka käsitsi](http://polynomialregr
 
 ## Takistused
 
-Pooljuhi takistus on läbi pooljuhi mineva voolu tugevuse funktsioon *R=f(I)*. Eeldame, et see seos on järgmine: $R=k\cdotI^{n}$. Joonistada graafik, logaritmiline graafik. Leida konstandid *k* ja *n*.
+Pooljuhi takistus on läbi pooljuhi mineva voolu tugevuse funktsioon $R=f(I)$. Eeldame, et see seos on järgmine: ($R=k\cdot I^{n}$). Joonistada graafik, logaritmiline graafik. Leida konstandid *k* ja *n*.
 
 ```{r}
 i = c(.001, .002, .004, .008, .016, .032, .064, .13, .26, .52)
@@ -543,7 +548,7 @@ l = c(.2, .25, .28, .32, .37, .4, .52)
 t = c(.9, 1.01, 1.06, 1.13, 1.23, 1.27, 1.46)
 pendulum = data.frame(l = l, t = t)
 colnames(pendulum) = c("l (m)", "T (s)")
-
+library(kableExtra)
 pendulum %>% kbl(caption = "Matemaatilise pendli võnkeperioodi <i>T</i> sõltuvus pendli pikkusest <i>l</i>") %>% kable_styling(bootstrap_options = c("striped", "hover"))
 
 ggplot(data = pendulum, mapping = aes(x = l, y = t)) +
@@ -566,6 +571,7 @@ formula = y ~ xForPendulum
 k = coef(modelForPendulum)[2]
 
 library(ggpmisc)
+library(ggpubr)
 ggplot(data = pendulum, mapping = aes(x = xForPendulum, y = t)) +
   labs(x = "x=sqrt(l)", y = "T(s)") +
   geom_point() +
@@ -591,7 +597,7 @@ modelForPendulumWithForced0 = lm(t ~ xForPendulum - 1)
 formulaWithForced0 = y ~ xForPendulum - 1
 
 kWithForced0 = coef(modelForPendulumWithForced0)[1]
-
+library(ggpubr)
 ggplot(data = pendulum, mapping = aes(x = xForPendulum, y = t)) +
   labs(x = "x=sqrt(l)", y = "T(s)") +
   geom_point() +
@@ -620,6 +626,7 @@ standardDeviationForG = abs(eval(derivative)) * standardDeviationForK
 
 library(distributions3)
 numberOfMeasurements = nrow(pendulum)
+numberOfMeasurements
 studentTDistribution = StudentsT(df = numberOfMeasurements - 1)
 studentTDistribution
 studentTFactor = quantile(studentTDistribution, 1 - .05 / 2)
@@ -640,3 +647,229 @@ minimaalne *g*: `r gWithForced0 - standardDeviationForG`
 maksimaalne *g*: `r gWithForced0 + standardDeviationForG`
 
 *Δ g*: `r standardDeviationForG / sqrt(numberOfMeasurements) * studentTFactor`
+
+## Kuulmislävi
+
+Inimese kuulmislävi on umbes 30 dB, mis vastab helirõhu muutusele .00063 Pa võrra. Millisel kaugusel heliallikast see praktiliselt kuuldamatu, kui on teada, et heli nõrgeneb kauguse suurenedes vastavalt seosele p=A/r^2^ +b, kui on teada, et allika läheduses on helirõhu mõõtmised eri kaugustel järgmised:
+
+```{r}
+r = c(2, 10, 15, 25)
+p = c(1.15, .6, .52, .4)
+sound = data.frame(r = r, p = p)
+colnames(sound) = c("r (m)", "p (Pa)")
+library(kableExtra)
+sound %>% kbl(caption = "Helirõhud ja kaugused") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+Selleks lineariseerige algne võrrand võttes uueks muutujaks x=1/r^2^. Seejärel leidke uue muutuja x ja p vaheline lineaarne võrrand y=A x + b. Ning siis leidke algse võrrandi abil kaugus r.
+
+```{r}
+xForSound = sapply(r, function(r) 1 / r ^ 2)
+if(!("x=1/r^2" %in% colnames(sound))) {
+  sound$xForSound = xForSound
+}
+print(sound)
+colnames(sound) = c("r (m)", "p (Pa)", "x=1/r^2")
+
+sound %>% kbl(caption = "Helirõhud ja kaugused lisamuutujaga") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+library(ggplot2)
+library(ggpmisc)
+formulaForSound = y ~ -1 + x
+ggplot(data = sound, mapping = aes(x = xForSound, y = p)) +
+  labs(x = "x=1/r^2", y = "p (Pa)") +
+  geom_point() +
+  geom_line() +
+  #ylim(6, NA) +
+  geom_smooth(method = "lm", formula = formulaForSound, fill = "orange") +
+  #stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~"))) +
+  stat_poly_eq(eq.with.lhs = "p~`=`~", eq.x.rhs = "~1/r^2", aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = formulaForSound, parse = TRUE) 
+  #stat_function(fun = function (xForPendulum) kWithForced0 * xForPendulum, color = "red") +
+  #annotation_logticks(sides ="lr")
+  #scale_x_log10() 
+  #scale_y_log10()
+ggplot(data = sound, mapping = aes(x = r, y = p)) +
+  labs(x = "r", y = "p") +
+  geom_point() +
+  geom_line()
+```
+
+## Aktiivsus
+
+Radioaktiivse elemendi Po210 aktiivsus langes aja jooksul järgmiselt:
+
+```{r}
+timeForActivity = c(0, 4, 8, 11, 15, 18, 21, 25, 29, 32)
+a = c(19520, 18620, 19180, 16920, 18620, 16500, 17527, 16562, 17210, 16030)
+activity = data.frame(timeForActivity = timeForActivity, a = a)
+colnames(activity) = c("Aeg t (päev)", "Aktiivsus A")
+library(kableExtra)
+activity %>% kbl(caption = "Aktiivsus") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+
+Radioaktiivse elemendi aktiivsus kahaneb aja jooksul vastavalt radioaktiivse lagunemise seadusele: $A=A_0 e^{-\lambda t}$, kus $A_0$ on konstant (aktiivsus ajahetkel 0) ja $\lambda$ on radioaktiivse lagunemise konstant. Elemendi poolestusaeg $\tau =\frac{ln2}{\lambda}=\frac{0,692}{\lambda}$. Leida tabelis toodud andmete põhjal polooniumi isotoobi radioaktiivse lagunemise konstant ja poolestusaeg.
+
+```{r}
+formulaForActivityExp = log(a) ~ timeForActivity
+modelForActivity = lm(formula = formulaForActivityExp)
+modelForActivity
+summaryForModelForActivity = summary(modelForActivity)
+summaryForModelForActivity
+library(ggplot2)
+library(ggpmisc)
+ggplot(data = activity, mapping = aes(x = timeForActivity, y = log(a))) +
+  labs(x = "t (päev)", y = "log(A) (lagunemist/min)") +
+  geom_point() +
+  geom_line() +
+  geom_abline(intercept = modelForActivity$coefficients[1], slope = modelForActivity$coefficients[2]) +
+  #geom_smooth(method = "lm", formula = log(a) ~ log(), fill = "orange")+
+  stat_poly_eq(eq.with.lhs = "A~`=`~", eq.x.rhs = "~t", aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), parse = TRUE) 
+  #stat_smooth(method = "nls", method.args = list(start = c(a = 1, b = 1)), formula = y ~ a * exp(b * x))
+lambda = -(modelForActivity$coefficients[2])
+```
+
+lambda: `r lambda`
+
+tau: `r log(2) / lambda`
+
+```{r}
+library(dplyr)
+activity = activity %>%
+  mutate("y=ln A" = log(a))
+activity
+```
+
+$$\sigma(\tau) = |\frac{d(\tau)}{d(\lambda)}| \cdot \sigma(\lambda) === |\frac{d(\frac{ln(2)}{\lambda})}{\lambda}| \cdot \sigma(\lambda) === \frac{ln(2) \cdot \sigma(\lambda)}{\lambda ^ {2}}$$
+
+$$\sigma(\lambda) = `r summaryForModelForActivity$coefficients[2, 2]`$$
+
+```{r}
+sigmaTauForActivity = log(2) * summaryForModelForActivity$coefficients[2, 2] / lambda ^ 2;
+sigmaTauForActivity
+```
+
+$$\sigma(\tau) = `r sigmaTauForActivity`$$
+
+```{r}
+numberOfTestsForActivity = length(timeForActivity)
+numberOfTestsForActivity
+library(distributions3)
+studentTDistributionForActivity = StudentsT(df = numberOfTestsForActivity - 1)
+studentTDistributionForActivity
+probabilitiesForActivity = 1 - .05 / 2
+probabilitiesForActivity
+studentTFactorForActivity = quantile(studentTDistributionForActivity, probabilitiesForActivity)
+studentTFactorForActivity
+```
+
+$$\Delta(\tau) = `r sigmaTauForActivity * studentTFactorForActivity / sqrt(numberOfTestsForActivity)`$$
+
+## Keemilise reaktsiooni kiirus
+
+3Keemilise reaktsiooni kiirus *R* (iseloomustab mitu grammi uut ühendit aja jooksul tekib) sõltub metalli kontsentratsioonist *n* järgmiselt: *R=A*n^3^+B\*n^2^+C*n* (tegemist on polünoomiga, mitte lineaarse sõltuvuse graafikuga!). Mõõtmistulemused on toodud alltoodud tabelis. joonistada sõltuvuse graafik koos mõõtemääramatustega, sobitada ülaltoodud funktsiooni graaikule ning leida suurused *A* ja *B*. Kas antud andmed kinnitavad antud seose kehtivust? Mille põhjal võib seda võita?
+
+```{r}
+n = c(9, 12, 15, 18, 21, 24, 27)
+r = c(.12, .22, .34, .5, .72, 1.1, 1.55)
+reactions = data.frame(n = n, r = r)
+colnames(reactions) = c("$n \\pm2 (g/m^{3})$", "$R\\pm.02 (g/s)$")
+library(kableExtra)
+reactions %>% kbl(caption = "Keemilise reaktsiooni kiirused") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+formulaForReactions = r ~ I(n ^ 3) + I(n ^ 2) + n
+modelForReactions = lm(formula = formulaForReactions, data = reactions)
+summaryForModelForReactions = summary(modelForReactions)
+summaryForModelForReactions
+library(ggplot2)
+library(ggpmisc)
+ggplot(data = reactions, mapping = aes(x = n, y = r)) +
+  labs(x = "$n \\pm2 (g/m^{3})$", y = "$R\\pm.02 (g/s)$") +
+  geom_point() +
+  geom_line() +
+  #ylim(6, NA) +
+  geom_smooth() +
+  #stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = formulaWithForced0) +
+  stat_poly_eq(eq.with.lhs = "r~`=`~", eq.x.rhs = "~n", aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), parse = TRUE, formula = formulaForReactions) +
+  #stat_function(fun = function (xForPendulum) kWithForced0 * xForPendulum, color = "red") +
+  annotation_logticks(sides ="lr")+
+  #scale_x_log10() 
+  #scale_y_log10()
+  geom_errorbar(aes(ymin = r - .02, ymax = r + .02)) +
+  geom_errorbarh(aes(xmin = n - 2, xmax = n + 2))
+
+```
+
+## Hapniku taseme saavutamine
+
+Vees hapniku taseme saavutamine Lõuna-Soome järvedes (J. Vesterinen, S.P. Devlin jt. Influence of littoral periphyton on whole-lake metabolism relates to littoral vegetation in humic lakes. Ecology, 98, 2017, 3074-3085)
+
+```{r}
+lake = c("Mekkojärvi", "Horkkajärvi", "Huhmari", "Möläkkä", "Nimetön", "Tavilammi", "Keskinen Rajajärvi", "Haukijärvi")
+
+production = c(42, 95, 70, 75, 35, 60, 25, 42)
+sdForProduction = c(30, 20, 15, 20, 15, 10, 10, 10)
+
+oxygen = data.frame(lake = lake, production = production, sdForProduction = sdForProduction)
+colnames(oxygen) = c("Järv", "Pelaafiline rimaarne O netotootmine/SD (mg C m^(-3) d^(-1)", "SD")
+library(kableExtra)
+oxygen %>% kbl(caption = "Hapniku tootmine") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+library(ggplot2)
+library(ggpmisc)
+ggplot(data = oxygen, mapping = aes(x = production)) +
+  #geom_bar(stat="identity", width=.5, fill="tomato3") + 
+  labs(title="Hapniku tootmine", 
+       subtitle="Soome", 
+       caption="järved", x = "Järv", y = "Pelaafiline rimaarne O netotootmine/SD (mg C m^(-3) d^(-1)") + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) +
+  #geom_point() +
+  #geom_line() +
+  #ylim(6, NA) +
+  #geom_smooth() +
+  #stat_regline_equation(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), formula = formulaWithForced0) +
+  #stat_poly_eq(eq.with.lhs = "r~`=`~", eq.x.rhs = "~n", aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~~")), parse = TRUE, formula = formulaForReactions) +
+  #stat_function(fun = function (xForPendulum) kWithForced0 * xForPendulum, color = "red") +
+  annotation_logticks(sides ="lr")
+  #scale_x_log10() 
+  #scale_y_log10()
+  #geom_errorbar(aes(ymin = r - .02, ymax = r + .02)) +
+  #geom_errorbarh(aes(xmin = n - 2, xmax = n + 2))
+
+```
+
+## Virutaalne labor
+
+(Matemaatilise) pendli vabavõnkumiste periood ehk aeg täisvõnke tegemiseks on seotud pendli pikkusega järgmiselt: $T = 2 * \pi * \sqrt{\frac{L}{g}}$, kus *L* on pendli pikkus meetrites ning *g* on vaba langemise kiirendus. Antud seos on üks võimalusi vaba langemise kiirenduse ehk raskuskiirenduse määramiseks. Kasutage [Phet-i simulatsiooni raskuskiirenduse määramiseks](http://phet.colorado.edu/sims/html/pendulum-lab/latest/pendulum-lab_en.html)
+
+Selleks:
+
+- Valige Lab, sellelt mõõteseadmeks Period Timer (mis mõõdab otseselt perioode). Pendli massiks võib olla 1 kg. Hõõrdumine (Friction) tuleb ise valida ja ei tohi olla 0.
+
+- Leidke pendli võnkeperioodid (iga pikkuse kohta 5 katset) 6-8 erineva pendli pikkuse korral, tulemused kandke alljärgnevasse tabelisse
+
+```{r}
+lForPendulumInPhet = c(.7, .5, .3, .1, .8, 1)
+tsForPendulumInPhet = list(list(1.7476, 1.6926, 1.6889, 1.6874, 1.686), list(1.4225, 1.422, 1.4216, 1.4213, 1.421), list(1.1014, 1.1011, 1.1009, 1.1007, 1.1005), list(.6354, .6353, .6352, .6352, .6351), list(1.7948, 1.7948, 1.7947, 1.7947, 1.7946), list(2.0064, 2.0064, 2.0063, 2.0063, 2.0063))
+listForPendulumInPhet <- list(lForPendulumInPhet, tsForPendulumInPhet,c(1,2,3,4), FALSE, list(1,2,3,4,5,6))
+#colnames(listForPendulumInPhet) <- c("Pikkus", "Perioodid")
+#matrixForPendulumInPhet[.7, c("B", "A")]
+matrixForPendulumInPhet <- matrix(ncol = 2, byrow = FALSE, c(
+  .7, c(1.7476, 1.6926, 1.6889, 1.6874, 1.686),
+  .5, c(1.4225, 1.422, 1.4216, 1.4213, 1.421),
+  .3, c(1.1014, 1.1011, 1.1009, 1.1007, 1.1005),
+  .1, c(.6354, .6353, .6352, .6352, .6351),
+  .8, c(1.7948, 1.7948, 1.7947, 1.7947, 1.7946),
+  1, c(2.0064, 2.0064, 2.0063, 2.0063, 2.0063)
+))
+matrixForPendulumInPhet
+
+xForPendulumInPhet = sapply(lForPendulumInPhet, sqrt)
+tForPendulumInPhet = sapply(tsForPendulumInPhet, mean)
+#sigmaForPendulumInPhet = sapply(tsForPendulumInPhet, sd)
+#pendulumInPhet = data.frame(lForPendulumInPhet = lForPendulumInPhet, xForPendulumInPhet = xForPendulumInPhet, tForPendulumInPhet = tForPendulumInPhet, sigmaForPendulumInPhet = sigmaForPendulumInPhet)
+#colnames(pendulumInPhet) = c("L(m)", "$x=sqrt(L) (m^{\\frac{1}{2}})$", "T_kesk(s)", "σ_T")
+library(kableExtra)
+#pendulumInPhet %>% kbl(caption = "Virtuaalne labor") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+
+Joonistage Excelis või LibreOffice Calcis graafik T sõltuvus $\sqrt{L}$-st ning sobitades lineaarse seosega leidke sirge tõus *k*. Et $k = \frac{2 * \pi}{\sqrt{g}}$, saab leida *k* abil *g*. Leidke *g* ning hinnake, kui palju see erineb aktsepteeritud väärtusest, mis on saadud juhul, kui õhutakistus on 0.
+

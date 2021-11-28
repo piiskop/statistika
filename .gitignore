@@ -4,3 +4,5 @@
 .Ruserdata
 _site/
 output
+regression_files/
+regression.log
