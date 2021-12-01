@@ -12,5 +12,7 @@ navbar:
       href: regression.html
     - text: "Valgusallika valgustugevuse hindamine"
       href: valgusallika-valgustugevuse-hindamine.html
+    - text: "II kontrolltöö järeltöö"
+      href: ii-kontrolltöö-järeltöö.html
     - text: "Autor"
       href: about.html

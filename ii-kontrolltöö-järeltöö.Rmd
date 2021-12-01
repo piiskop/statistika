@@ -1,0 +1,161 @@
+---
+title: "II kontrolltöö järeltöö"
+author: 'peacecop kalmer:'
+date: "12/1/2021"
+output:
+  bookdown::html_document2:
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Esimene ülesanne
+
+### Ülesande püstitus
+
+Valguse intensiivsus väheneb vedeliku läbimisel vastavalt tabelis \@ref(tab:tableForIntensivity) toodud andmetele.
+
+```{r tableForIntensivity}
+l = c(2, 4, 6, 8, 10, 15, 20, 30, 50)
+
+i = c(26, 22, 20.5, 18.5, 16.5, 14, 12.5, 10, 7)
+
+dataframeForIntensivity = data.frame(l = l, i = i)
+
+colnames(dataframeForIntensivity) = c("$L (cm) \\pm 0.5(cm)$", "$I (W/cm^{2}) \\pm 5 \\% näidust (W/cm^{2})$")
+
+library(kableExtra)
+dataframeForIntensivity %>% kbl(caption = "Valguse intensiivsus") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+
+Valguse intensiivsus väheneb vedeliku läbimisel vastavalt Bouguer' seadusele: $I = I_{0}e^{-\alpha L}$, kus *I* on valguse intensiivsus ning *L* vedelikukihi paksus.
+
+a) Joonestada tabelis toodud andmetele vastav graafik (mitte unustada telgedele tähiseid) koos veakastidega;
+
+b) joonestada tabelis toodud andmetele vastav graafik poollogaritmilises teljestikus või - lineariseerida andmed ning seejärel joonistada graafik uute tähistuste ja arvudega;
+
+c) leida vedeliku läbipaistvust iseloomustav konstant *α*
+
+### Lahendus
+
+#### Ülesande a-osa
+
+Tabelis \@ref(tab:tableForIntensivity) toodud andmetele vastav graafik koos veakastidega on pildil \@ref(fig:graphForIntensivity).
+
+```{r graphForIntensivity, fig.cap="Valguse intensiivsus"}
+library(ggplot2)
+ggplot(data = dataframeForIntensivity, mapping = aes(x = l, y = i)) +
+  labs(x = expression(paste("L (cm) " %+-% " 0.5(cm)")), y = expression(paste("I ",(W/cm^{2}) %+-% "5 % näidust ", (W/cm^{2}))), title = paste("Valguse intensiivsus")) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = i * .95, ymax = i * 1.05)) +
+  geom_errorbarh(aes(xmin = l - .5, xmax = l + .5))
+```
+
+#### Ülesande b-osa
+
+Tabelis \@ref(tab:tableForIntensivity) toodud andmetele vastav graafik poollogaritmilises teljestikus on joonisel \@ref(fig:graphForIntensivityAsLog).
+
+```{r graphForIntensivityAsLog, fig.cap="Valguse intensiivsus poollogaritmilises teljestikus"}
+library(ggplot2)
+ggplot(data = dataframeForIntensivity, mapping = aes(x = l, y = i)) +
+  labs(x = expression(paste("L (cm) " %+-% " 0.5(cm)")), y = expression(paste("I ",(W/cm^{2}) %+-% "5 % näidust ", (W/cm^{2}))), title = paste("Valguse intensiivsus")) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = i * .95, ymax = i * 1.05)) +
+  geom_errorbarh(aes(xmin = l - .5, xmax = l + .5)) +
+  annotation_logticks(sides ="rl") +
+  #scale_x_log10() 
+  scale_y_log10()
+```
+
+#### Ülesande c-osa
+
+```{r}
+lmForIntensivity = lm(formula = log(i) ~ l, data = dataframeForIntensivity)
+lmForIntensivity
+```
+
+Vedeliku läbipaistvust iseloomustav konstant *α* omab ligikaudset väärtust `r round(-lmForIntensivity$coefficients[2], 3)`.
+
+## Teine ülesanne
+
+### Ülesande püstitus
+
+Vee ioonide sisalduse (ioonide kontsentratsiooni) *n* ja vee elektrijuhtivuse s vahel kehtib lineaarne seos: $s=k\cdot n$, kus k iseloomustab antud ioonide panust elektrijuhtivusesse ning on konstantne suurus. Joonistada tabelis \@ref(tab:tableForElectricity) olevate andmete põhjal sõltuvust iseloomustav graafik koos veakastidega. Leida järgmiste andmete põhjal lineaarset regressioonianalüüsi kasutades konstant *k*, selle standardhälve $\sigma_{k}$. Leida ka Pearsoni regressioonikordaja. Kas antud andmed on heas (lineaarses) korrelatsioonis? Põhjendage vastust.
+
+```{r tableForElectricity}
+n = c(.08, .1, .12, .14, .15, .18, .2, .23, .26)
+
+s = c(.81, 1.21, 1.53, 1.95, 2.21, 2.9, 3.15, 3.75, 4.29)
+
+deltaS = c(.04, .06, .02, .12, .22, .13, .2, .35, .17)
+
+dataframeForElectricity = data.frame(n = n, s = s, deltaS = deltaS)
+
+colnames(dataframeForElectricity) = c("$n (mg/ml) \\pm 0.05 (mg/ml)$", "s (ms) (mS)", "Δs (mS)")
+
+library(kableExtra)
+dataframeForElectricity %>% kbl(caption = "Elektrijuhtivus") %>% kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+
+### Lahendus
+
+Tabelis \@ref(tab:tableForElectricity) olevate andmete põhjal joonistatud sõltuvust iseloomustav graafik koos veakastidega on joonisel \@ref(fig:graphForElectricity).
+
+```{r graphForElectricity, fig.cap="Elektrijuhtivus"}
+ggplot(data = dataframeForElectricity, mapping = aes(x = n, y = s)) +
+  labs(x = expression(paste("n (mg/ml) " %+-% "0.05(mg/ml)")), y = expression(paste("s (mS) (mS)")), title = paste("Elektrijuhtivus")) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = s - deltaS, ymax = s + deltaS)) +
+  geom_errorbarh(aes(xmin = n - .05, xmax = n + .05))
+```
+
+```{r}
+lmForElectricity = lm(formula = s ~ n, data = dataframeForElectricity)
+lmForElectricity
+```
+
+Tabelis \@ref(tab:tableForElectricity) olevate andmete põhjal lineaarset regressioonianalüüsi kasutades arvutatud konstandi *k* väärtus on `r round(lmForElectricity$coefficients[2], 4)`.
+
+```{r}
+summaryForElectricity = summary(lmForElectricity)
+summaryForElectricity
+```
+
+Tabelis \@ref(tab:tableForElectricity) olevate andmete põhjal lineaarset regressioonianalüüsi kasutades arvutatud konstandi *k* standardhälve on `r round(summaryForElectricity$coefficients[2, 2], 3)`
+
+Pearsoni regressioonikordaja on `r sqrt(summaryForElectricity$r.squared)`.
+
+Antud andmed on heas korrelatsioonis, sest Pearsoni kordaja ruut on lausa üle .99.
+
+## Kolmas ülesanne
+
+### Ülesande püstitus
+
+Vaba langemise kiirenduse määramiseks lasti kivi kukkuda erinevatelt kõrgustelt maapinnale ja leiti kukkumise aeg, mis on toodud tabelis \@ref(tab:tableForFalling).
+
+```{r tableForFalling}
+t = c(.3, .4, .5, .6, .75, .85)
+
+h = c(.45, .75, 1.3, 1.7, 2.7, 3.5)
+
+dataframeForFalling = data.frame(t = t, h = h)
+
+colnames(dataframeForFalling) = c("t plussmiinus .05 s", "h plussmiinus 5 % näidust (m)")
+
+```
+
+a) Koostada antud andmete põhjal graafik koos veakastidega
+
+b) Arvestades, et kõrguse ja kukkumise aja vahel on seos h=gt^2/2, leida õige funktsioon ning vastava funktsiooni parameetrid.
+
+c) leida vaba langemise kiirendus g.
+
+bonus: Lineariseerida andmed ning leida funktsiooni parameetris ja g LINEST funktsiooni abil, samuti - g standardhälve.
