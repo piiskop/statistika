@@ -10,5 +10,7 @@ navbar:
       href: histogramm.html
     - text: "Regressioon"
       href: regression.html
+    - text: "Valgusallika valgustugevuse hindamine"
+      href: valgusallika-valgustugevuse-hindamine.html
     - text: "Autor"
       href: about.html
