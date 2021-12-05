@@ -188,3 +188,12 @@ ggplot(data = dataframeForFalling,mapping = aes(x = t, y = h)) +
 lmForFalling = lm(h ~ I(t) ^ 2 + t, data = dataframeForFalling)
 lmForFalling
 ```
+
+Õpetaja tagasiside ajahetkest neljapäev, 2. detsember 2021, 13.26:
+
+"3. ülesande jaoks RStudioga sobisk lineariseerimine paremini.
+Kui funkktsioon
+h=g/2 *t^2, siis sobiks võtta x=t^2 ning y=h
+Saaks graafiku y=a*x + b (või saab ka b võtta nulliks) ning siis:
+
+g=2a."
