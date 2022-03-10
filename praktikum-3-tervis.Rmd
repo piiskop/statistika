@@ -1,0 +1,90 @@
+---
+title: "Praktikum 3: tervis"
+author: 'peacecop kalmer:'
+date: "2/17/2022"
+output:
+  bookdown::html_document2:
+    toc: TRUE
+    toc_float: TRUE
+bibliography: references.bib
+biblio-style: "apalike"
+link-citations: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Praktikum 3: tervis
+
+## Ülesande püstitus
+
+- Püstitage viis hüpoteesi, kasutage näidist nendele vastamiseks.
+
+- Vähemalt üks hüpotees peab eeldama Spearmani korrelatsiooni koefitsiendi kasutamist ning üks Kendall tau-b spetsiifilisemalt üks tunnust peab olema binaarne.
+
+## Lahendus
+
+Esimesed neli analüüsi on [Google Drive](https://docs.google.com/document/d/1JXn383QON3U-SgOlPRmfzGDVM8b5irYLT0fq0p_JWxY/edit?usp=sharing)'s.
+
+### Viies analüüs
+
+#### Uurimisküsimus/hüpotees
+
+Stressitase ja kas inimene suitsetab, on omavahel tugevalt positiivselt seotud.
+
+#### Eelduste kontroll ja testi valmine
+
+Seda, kas inimene suitsetab, mõõdeti binaarse ehk dihhotoomse tunnusega, stressitaset intervalltunnusega. Kui üks tunnus on dihhotoomne, tuleb vastavalt [@r]: 229 punkt-biseeria korrelatsioonanalüüs. Ühtlasi vastavalt [@dataanalysis] soovitakse Kendalli korrelatsioonanalüüsi kasutamist samal põhjusel.
+
+#### Statistlised hüpoteesid
+
+H0: stressitase ja kas inimene suitsetab, ei ole omavahel seotud
+
+H1: stressitase ja kas inimene suitsetab, on omavahel seotud
+
+Usaldusnivooks valin .05.
+
+#### Väljund
+
+```{r}
+library(haven)
+Praktikum0303 <- read_sav("Praktikum0303.sav")
+library(ggplot2)
+ggplot2::ggplot(Praktikum0303, aes(stressmo)) +
+  geom_histogram(binwidth = 1, fill = "#56B4E9", alpha = .5) +
+  labs(y = "Sagedus", x = "Stressitase") +
+  theme_bw()
+```
+
+```{r tableOfSummary}
+library(magrittr)
+Praktikum0303 %>%
+  dplyr::summarise(
+    median = median(stressmo),
+    mean = mean(stressmo),
+    var = var(stressmo),
+    sd = sd(stressmo)
+  ) %>%
+  round(., 2)
+```
+
+```{r}
+health_matrix <- as.matrix(Praktikum0303)
+GGally::ggscatmat(health_matrix, columns <- c("smoke", "stressmo")) +
+  theme_minimal()
+Praktikum0303 %>%
+  dplyr::select(smoke, stressmo) %>%
+  correlation::correlation(method = "kendall")
+cor_test <- cor.test(Praktikum0303$stressmo, Praktikum0303$smoke, method = "pearson")
+cor_test
+```
+
+#### Tulemused
+
+Antud valimi  keskmiseks stressitasemeks oli 5.69 (n = 246; SD = 2.48) (vt. \@ref(tableOfSummary)). Vastavalt Pearson’i korrelatsioonanalüüsile esines statistiliselt ebaoluline seos suitsetamise ja stressitaseme r(244)= .0546`r cor_test$r`, p >> 0.05, tunnuste vaheline seos kirjeldas nullilähedaselt vastastikust variatiivsust. Seda kinnitas ka Kendalli korrelatsioonanalüüs: τ(246) = .05, p > .05.
+
+#### Järeldus
+
+Kehtima jäi nullhüpotees ehk stressitase ja suitsetamine pole omavahel seotud.
+

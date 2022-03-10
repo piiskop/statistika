@@ -1,5 +1,9 @@
 ---
 title: "Heli intensiivsuse määramine"
+output:
+  bookdown::html_document2:
+    toc: TRUE
+    toc_float: TRUE
 ---
 ## Ülesande püstitus
 Nutitelefoni rakenduse "Sound   Meter"   abil mõõtsin   kolmes   ülikooli   ruumis   heli
@@ -42,9 +46,9 @@ onlyLevelsWithNumbers = unfactor(onlyLevels)
 Lasen arvutada aritmeetilised keskmised, üksikmõõtmiste standardhälbed ja keskmised standardhälbed ning teen nendest eraldi tabeli:
 
 ```{r}
-levelsWithMeans = colMeans(onlyLevelsWithNumbers)
-levelsWithSingleDeviations = rbind("Aritmeetiline keskmine" = levelsWithMeans, "Üksikmõõtmise standardhälve" = apply(onlyLevelsWithNumbers, 2, sd))
-levelsWithAverageDeviations = rbind(levelsWithSingleDeviations, "Keskmine standardhälve" = apply(onlyLevelsWithNumbers, 2, function(intensity) sd(intensity) / sqrt(nrow(onlyLevelsWithNumbers))))
+#levelsWithMeans = colMeans(onlyLevelsWithNumbers)
+#levelsWithSingleDeviations = rbind("Aritmeetiline keskmine" = levelsWithMeans, "Üksikmõõtmise standardhälve" = apply(onlyLevelsWithNumbers, 2, sd))
+#levelsWithAverageDeviations = rbind(levelsWithSingleDeviations, "Keskmine standardhälve" = apply(onlyLevelsWithNumbers, 2, function(intensity) sd(intensity) / sqrt(nrow(onlyLevelsWithNumbers))))
 ```
 
 Kuna mõõtmisi oli igas ruumis kaheksa, siis arvutan Studenti T jaotuse ja vastava kordaja tõenäosuse .95 % korral:
@@ -60,19 +64,19 @@ studentTFactor
 Lisan statistikutele mõõtmismääramatused:
 
 ```{r}
-levelsWithHalvesOfConfidenceIntervals = rbind(levelsWithAverageDeviations, "Mõõtmismääramatused" = apply(onlyLevelsWithNumbers, 2, function(intensity) studentTFactor * sd(intensity) / sqrt(nrow(onlyLevelsWithNumbers))))
+#levelsWithHalvesOfConfidenceIntervals = rbind(levelsWithAverageDeviations, "Mõõtmismääramatused" = apply(onlyLevelsWithNumbers, 2, function(intensity) studentTFactor * sd(intensity) / sqrt(nrow(onlyLevelsWithNumbers))))
 ```
 
 Ühendan statistikud mõõtmistulemustega:
 
 ```{r}
-intensitiesWithStatistics = rbind(format(onlyLevelsWithNumbers, digits = 3), format(levelsWithHalvesOfConfidenceIntervals, digits = 2), "Heli intensiivsus tõenäosusega 95 %" = apply(onlyLevelsWithNumbers, 2, function(intensity) paste(as.character(format(mean(intensity), digits = 3)), ' +/- ', as.character(format(studentTFactor * sd(intensity) / sqrt(nrow(onlyLevelsWithNumbers)), digits = 3)))))
+#intensitiesWithStatistics = rbind(format(onlyLevelsWithNumbers, digits = 3), format(levelsWithHalvesOfConfidenceIntervals, digits = 2), "Heli intensiivsus tõenäosusega 95 %" = apply(onlyLevelsWithNumbers, 2, function(intensity) paste(as.character(format(mean(intensity), digits = 3)), ' +/- ', as.character(format(studentTFactor * sd(intensity) / sqrt(nrow(onlyLevelsWithNumbers)), digits = 3)))))
 ```
 
 Kuvan mõõtmistulemused ja statistikud:
 
 ```{r}
-intensitiesWithStatistics %>% kbl(caption = "Helitase detsibellides ülikoolilinnaku ruumides", digits = 1) %>% kable_styling(bootstrap_options = c("striped", "hover")) %>% column_spec(1, bold = T, border_right = T) %>% row_spec(nrow(onlyLevels) + 1, background = "#00ff00") %>% row_spec(nrow(onlyLevels) + 2, background = "#ff00ff") %>% row_spec(nrow(onlyLevels) + 3, background = "#00ffff") %>% row_spec(nrow(onlyLevels) + 4, background = "#ff0000") %>% row_spec(nrow(onlyLevels) + 5, background = "#ffff00")
+#intensitiesWithStatistics %>% kbl(caption = "Helitase detsibellides ülikoolilinnaku ruumides", digits = 1) %>% kable_styling(bootstrap_options = c("striped", "hover")) %>% column_spec(1, bold = T, border_right = T) %>% row_spec(nrow(onlyLevels) + 1, background = "#00ff00") %>% row_spec(nrow(onlyLevels) + 2, background = "#ff00ff") %>% row_spec(nrow(onlyLevels) + 3, background = "#00ffff") %>% row_spec(nrow(onlyLevels) + 4, background = "#ff0000") %>% row_spec(nrow(onlyLevels) + 5, background = "#ffff00")
 ```
 ## Järeldus
 
