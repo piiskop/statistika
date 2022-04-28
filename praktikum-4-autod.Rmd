@@ -1,0 +1,662 @@
+---
+title: '4. praktikum: autod'
+author: 'peacecop kalmer:'
+date: "3/10/2022"
+output:
+  bookdown::html_document2:
+    toc: TRUE
+    toc_float: TRUE
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+data(birthwt, package = "MASS")
+#birthwt
+library(magrittr)
+library(tidyverse)
+library(sjlabelled)
+birthwt <- birthwt %>%
+  mutate(
+    smoke = factor(smoke, labels = c("Non-smoker", "Smoker")),
+    race = factor(race, labels = c("White", "African American", "Other"))
+    ) %>%
+  var_labels(
+    bwt = 'Birth weight (g)',
+    smoke = 'Smoking status',
+    race = 'Race'
+    )
+
+model_norm <- lm(bwt ~ smoke + race, data = birthwt)
+library(rstatix)
+model_norm %>% Anova()
+library(parameters)
+model_norm %>% parameters()
+library(performance)
+model_norm %>% performance()
+#birthwt
+```
+
+# Praktikum 4: autod
+
+## Reeglistik
+
+Kui ühe sisendi väärtused suurenevad ja teise sisendi väärtused ka suurenevad mis tahes kujul, on tegemist monotoonselt suurenevate funktsiooni väljundi väärtustega.
+
+Kui ühe sisendi väärtused suurenevad ja teise sisendi väärtused vähenevad mis tahes kujul, on tegemist monotoonselt vähenevate funktsiooni väljundi väärtustega.
+
+Kui ühe sisendi väärtuste suurenemine võib vahel põhjustada teise sisendi väärtuste suurenemise või vähenemise, on tegemist mittemonotoonse funktsiooniga.
+
+Spearmani järgu korrelatsioonikoefitsient tähendab, milline monotoonne suhe on kummagi sisendi vahel. Selle väärtused on [-1, 1]:
+
+- 1: täiuslikult monotoonne suurenevate väljundi väärtustega suhe,
+
+- .8: tugevalt monotoonne suurenevate väljundi väärtustega suhe,
+
+- .2: nõrgalt monotoonne suurenevate väljundi väärtustega suhe,
+
+- 0: mittemonotoonne suhe,
+
+- -.2: nõrgalt monotoonne vähenevate väljundi väärtustega suhe,
+
+- -.8: tugevalt monotoonne vähenevate väljundi väärtustega suhe,
+
+- -1: täiuslikult monotoonne vähenevate väljundi väärtustega suhe,
+
+## Ülesande püstitus
+
+Tehke lahti andmestik car.sav
+
+1.  Mis küsimusi me saame küsida?
+    
+    Näiteks - kas auto kaal ja auto hobusejõud on oma vahel seotud?
+
+2.  Mis hüpoteese me saame püstitada?
+    
+    Näiteks - Mida rohkem on autol hobusejõud seda kiiremani auto kiirendab 60 mphi.
+
+Looge regressioon mudel, leidke sõltumatuid tunnuseid mis ennustaksid kõige paremini mitu miili paaki kohta auto sõidab.
+
+Sõltuv tunnus – miilid paaki kohta 
+
+Sõltumatud – pange kõik alguses, see järel võtke välja need mis pole statistiliselt olulised.
+
+Kasutage kõike mida oleme õppinud –
+
+1) kirjeldage tunnuseid,
+
+2)  viige läbi korrelatsioonid,
+    
+    jätta ainult korrelatsioonidest välja silindrid ja piirkonnad, sest vahemikud pole võrdsed
+    
+3) püstitage uurimisküsimus,
+
+  millised tunnused iseloomustavad mpg kõige enam
+
+4) viige läbi regressioon analüüs,
+horsepower ei ole, kiirendus ei ole oluline, euroopa ei ole, jaapan pole
+võrrand: -17.23 + weight * -0.01 + year * .8 + ed * .01 + am * -2.52
+82% saab õige tulemuse selle võrrandiga. no saab ta jee (adjusted r2)
+
+5) pange kõik tabelid ülesse,
+standardiseeritud beeta läheb tunnuste raportisse, võrrandisse mittestandardiseeritud beeta
+6) kirjutage järeldus.
+
+## Lahendus
+
+### Kirjeldamine
+
+```{r}
+library(haven)
+cars <- read_sav("carsPraktikum10032022.sav")
+cars <- haven::as_factor(cars)
+cars$year <- as.numeric(as.character(cars$year))
+```
+
+Analüüsimise objektideks on autode tunnused:
+
+- miili galloni kohta - suhtetunnus,
+
+- mootori kubatuur kuuptollides - suhtetunnus,
+
+- võimsus hobujõududes - suhtetunnus,
+
+- mass naeltes - suhtetunnus,
+
+- kiirenduse kestus kiiruselt $0 \cdot \frac{mi}{h}$ kuni kiiruseni $60 \cdot \frac{mi}{h}$ - suhtetunnus,
+
+- mudeli aasta jääk peale jagamist sajaga - intervalltunnus,
+
+- auto päritolu - nominaaltunnus,
+
+- silindrite arv - intervalltunnus.
+
+Autode tunnuste kirjeldav statistika:
+
+```{r summary-cars}
+library(psych)
+described_cars <- describe(cars)
+described_cars
+described_cars["horse", "mean"]
+```
+
+### Korrelatsioonanalüüsi valik
+
+Järgnevalt uurin, kuidas on omavahel seotud tunnused nagu kütusekulu, mootori maht, võimsus, mass, kiirendus ja aasta. Kuigi mõne analüüsi võiks teha Pearsoni korrelatsioonianalüüsina, sest võrdlen intervalltunnuseid omavahel, lähtun siiski sellest, kas tegemist on normaaljaotusega või mitte.
+
+```{r}
+library(moments)
+#attributes(cars$mpg) <- NULL
+#cars_numeric <- as.numeric(unlist(cars[2]))
+#cars_numeric
+#cars_numeric_without_na <- cars_numeric[!is.na(cars_numeric)]
+#cars_numeric_without_na
+#class(cars_numeric_without_na)
+#jarque.test(cars_numeric_without_na)
+#data <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1 , 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3)
+#jarque.test(data)
+#set.seed( 1234 )
+#x <- rnorm( 1000 )
+#jarque.test( x )
+#dataset <- runif(1000)
+#library(fBasics)
+```
+
+Kas kütusekulu väärtused on normaalselt jaotatud?
+
+```{r}
+shapiro.test (cars$mpg)
+library(ggplot2)
+ggplot2::ggplot(cars, aes(mpg)) +
+  geom_histogram(binwidth = 2, fill = "blue") +
+  labs(y = "Sagedus", x = "Miili galloni kohta") +
+  theme_bw()
+```
+
+Kütusekulu väärtused ei ole normaalselt jaotatud. Esineb kurtoos.
+
+Kas mootori mahu väärtused on normaalselt jaotatud?
+
+```{r}
+shapiro.test(cars$engine)
+ggplot2::ggplot(cars, aes(engine)) +
+  geom_histogram(binwidth = 25, fill = "green") +
+  labs(y = "Sagedus", x = "Mootori maht (kuuptollides)") +
+  theme_bw()
+```
+
+Mootori mahu väärtused ei ole normaalselt jaotatud. Esineb kurtoos.
+
+Kas võimsuse väärtused on normaalselt jaotatud?
+
+```{r}
+shapiro.test(cars$horse)
+ggplot2::ggplot(cars, aes(horse)) +
+  geom_histogram(binwidth = 7, fill = "yellow",) +
+  labs(y = "Sagedus", x = "Hobujõud") +
+  theme_bw()
+```
+
+Võimsuse väärtused ei ole normaalselt jaotatud. Esineb kurtoos.
+
+Kas massi väärtused on normaalselt jaotatud?
+
+```{r}
+shapiro.test(cars$weight)
+ggplot2::ggplot(cars, aes(weight)) +
+  geom_histogram(binwidth = 119, fill = "orange") +
+  labs(y = "Sagedus", x = "Sõiduki mass (naeltes)") +
+  theme_bw()
+```
+
+Massi väärtused ei ole normaalselt jaotatud. Esineb kurtoos.
+
+Kas kiirenduse väärtused on normaalselt jaotatud?
+
+```{r}
+shapiro.test(cars$accel)
+ggplot2::ggplot(cars, aes(accel)) +
+  geom_histogram(binwidth = 1, fill = "brown") +
+  labs(y = "Sagedus", x = "Aeg kiirendamiseks 0-st kuni 60 miilini tunnis (s)") +
+  theme_bw()
+```
+
+Kiirenduse väärtused on normaalselt jaotatud.
+
+Kas aasta väärtused on normaalselt jaotatud?
+
+```{r choice-year}
+shapiro.test(as.numeric(cars$year))
+ggplot2::ggplot(cars, aes(year)) +
+  geom_histogram(binwidth = 1, fill = "red", stat = "count") +
+  labs(y = "Sagedus", x = "Mudeli aasta (modulo 100)") +
+  theme_bw()
+```
+
+Aasta väärtused ei ole normaalselt jaotatud. Esineb kurtoos.
+
+Kuna ainult ühe tunnuse väärtused on normaalselt jaotatud, kasutan kõikide korrelatsioonianalüüside jaoks Spearmani analüüsi.
+
+### Korrelatsioonanalüüsid
+
+```{r correlation-analysis-engine-mpg}
+cars %>%
+  dplyr::select(engine, mpg) %>%
+  correlation::correlation(method = "spearman")
+```
+
+Kas auto mootori maht ja läbisõit kütuseühiku kohta on oma vahel seotud?
+
+Auto mootori maht (M = `r described_cars["engine", "mean"]` * in^3^, SD = `r described_cars["engine", "sd"]` * in^3^) ja läbisõit kütuseühiku kohta ($M = 23.55 \cdot \frac{mi}{g}$, $SD = 7.79 \cdot \frac{mi}{g}$) on oma vahel tugevas negatiivses seoses (ρ(397) = -0.86, p < 0.001).
+
+Järeldus. Auto mootori maht ja läbisõit kütuseühiku kohta on tugevalt seotud: mida suurem on mootori maht, seda vähem vahemaad saab selle autoga ühe galloni kütusega läbida ning mida rohkem vahemaad saab ühe galloni kütusega läbida, seda väiksem on selle auto mootori maht.
+
+```{r correlation-analysis-horse-mpg}
+cars %>%
+  dplyr::select(horse, mpg) %>%
+  correlation::correlation(method = "spearman")
+```
+
+Kas auto mootori võimsus ja läbisõit kütuseühiku kohta on oma vahel seotud?
+
+Auto mootori võimsus (M = `r described_cars["horse", "mean"]` * hj, SD = `r described_cars["horse", "sd"]` * hj) ja läbisõit kütuseühiku kohta ($M = 23.55 \cdot \frac{mi}{g}$, $SD = 7.79 \cdot \frac{mi}{g}$) on oma vahel tugevas negatiivses seoses (ρ(391) = -0.86, p < 0.001).
+
+Järeldus. Auto mootori võimsus ja läbisõit kütuseühiku kohta on tugevalt seotud: mida suurem on mootori võimsus, seda vähem vahemaad saab selle autoga ühe galloni kütusega läbida ning mida rohkem vahemaad saab ühe galloni kütusega läbida, seda väiksem on selle auto mootori võimsus.
+
+```{r}
+cars %>%
+  dplyr::select(weight, mpg) %>%
+  correlation::correlation(method = "spearman")
+```
+
+Kas auto mass ja läbisõit kütuseühiku kohta on oma vahel seotud?
+
+Auto mass (M = `r described_cars["weight", "mean"]` * lbs, SD = `r described_cars["weight", "sd"]` * lbs) ja läbisõit kütuseühiku kohta ($M = 23.55 \cdot \frac{mi}{g}$, $SD = 7.79 \cdot \frac{mi}{g}$) on oma vahel tugevas negatiivses seoses (ρ(397) = -0.86, p < 0.001).
+
+Järeldus. Auto mass ja läbisõit kütuseühiku kohta on tugevalt seotud: mida suurem on mass, seda vähem vahemaad saab selle autoga ühe galloni kütusega läbida ning mida rohkem vahemaad saab ühe galloni kütusega läbida, seda väiksem on selle auto mass.
+
+```{r}
+cars %>%
+  dplyr::select(accel, mpg) %>%
+  correlation::correlation(method = "spearman")
+```
+
+Kas auto ajavahemik kiirendamaks nullkiirusest 60 miilini tunnis ja läbisõit kütuseühiku kohta on oma vahel seotud?
+
+Auto ajavahemik kiirendamaks nullkiirusest 60 miilini tunnis (M = `r described_cars["accel", "mean"]` * s, SD = `r described_cars["accel", "sd"]` * s) ja läbisõit kütuseühiku kohta ($M = 23.55 \cdot \frac{mi}{g}$, $SD = 7.79 \cdot \frac{mi}{g}$) on oma vahel nõrgas positiivses seoses (ρ(397) = 0.45, p < 0.001).
+
+Järeldus. Auto ajavahemik kiirendamaks nullkiirusest 60 miilini tunnis ja läbisõit kütuseühiku kohta on nõrgalt seotud: mida kauem kestab auto kiirendamine nullist 60 miilini tunnis, seda rohkem vahemaad saab selle autoga ühe galloni kütusega läbida ning mida rohkem vahemaad saab ühe galloni kütusega läbida, seda kauem kestab auto kiirendamine nullist 60 miilini tunnis.
+
+```{r}
+cars %>%
+  dplyr::select(year, mpg) %>%
+  correlation::correlation(method = "spearman")
+```
+
+Kas auto mudeli väljalaske aasta ja läbisõit kütuseühiku kohta on oma vahel seotud?
+
+Auto mudeli väljalaske aasta (M = `r described_cars["year", "mean"]`, SD = `r described_cars["year", "sd"]`) ja läbisõit kütuseühiku kohta ($M = 23.55 \cdot \frac{mi}{g}$, $SD = 7.79 \cdot \frac{mi}{g}$) on oma vahel nõrgas positiivses seoses (ρ(397) = 0.57, p < 0.001).
+
+Järeldus. Auto mudeli väljalaske aasta ja läbisõit kütuseühiku kohta on nõrgalt seotud: mida noorem on auto mudel, seda rohkem vahemaad saab selle autoga ühe galloni kütusega läbida ning mida rohkem vahemaad saab ühe galloni kütusega läbida, seda uuem on auto mudel.
+
+```{r}
+cars %>%
+  dplyr::select(horse, engine) %>%
+  correlation::correlation(method = "spearman")
+```
+
+Kas auto mootori võimsus ja mootori maht on oma vahel seotud?
+
+Auto mootori võimsus (M = `r described_cars["horse", "mean"]` * hj, SD = `r described_cars["horse", "sd"]` * hj) ja auto mootori maht (M = `r described_cars["engine", "mean"]` * in^3^, SD = `r described_cars["engine", "sd"]` * in^3^) on oma vahel tugevas positiivses seoses (ρ(399) = 0.88, p < 0.001).
+
+Järeldus. Auto mootori võimsus ja mootori maht on tugevalt seotud: mida võimsam on auto mootor, seda suurem on selle auto mootori maht ning mida suurem on auto mootori maht, seda suurem on selle auto mootori võimsus.
+
+```{r}
+cars %>%
+  dplyr::select(weight, engine) %>%
+  correlation::correlation(method = "spearman")
+```
+
+Kas auto mass ja mootori maht on oma vahel seotud?
+
+Auto mass (M = `r described_cars["weight", "mean"]` * lbs, SD = `r described_cars["weight", "sd"]` * lbs) ja auto mootori maht (M = `r described_cars["engine", "mean"]` * in^3^, SD = `r described_cars["engine", "sd"]` * in^3^) on oma vahel tugevas positiivses seoses (ρ(405) = 0.95, p < 0.001).
+
+Järeldus. Auto mass ja mootori maht on tugevalt seotud: mida rohkem auto kaalub, seda suurem on selle auto mootori maht ning mida suurem on auto mootori maht, seda rohkem see auto kaalub.
+
+```{r}
+cars %>%
+  dplyr::select(accel, engine) %>%
+  correlation::correlation(method = "spearman")
+```
+
+Kas auto ajavahemik kiirendamaks nullist 60 miilini tunnis ja mootori maht on oma vahel seotud?
+
+Auto ajavahemik kiirendamaks nullist 60 miilini tunnis (M = `r described_cars["accel", "mean"]` * s, SD = `r described_cars["accel", "sd"]` * s) ja auto mootori maht (M = `r described_cars["engine", "mean"]` * in^3^, SD = `r described_cars["engine", "sd"]` * in^3^) on oma vahel nõrgas negatiivses seoses (ρ(405) = -0.52, p < 0.001).
+
+Järeldus. Auto ajavahemik kiirendamaks nullist 60 miilini tunnis ja mootori maht on nõrgalt seotud: Mida kauem kestab auto kiirendamine nullist 60 miilini tunnis, seda väiksem on selle auto mootori maht ning mida suurem on auto mootori maht, seda kiiremini saab selle auto kiirendada nullist 60 miilini tunnis.
+
+```{r}
+cars %>%
+  dplyr::select(year, engine) %>%
+  correlation::correlation(method = "spearman")
+```
+
+Kas auto mudeli väljalaske aasta ja mootori maht on oma vahel seotud?
+
+Auto mudeli väljalaske aasta (M = `r described_cars["year", "mean"]`, SD = `r described_cars["year", "sd"]`) ja auto mootori maht (M = `r described_cars["engine", "mean"]` * in^3^, SD = `r described_cars["engine", "sd"]` * in^3^) on oma vahel nõrgas negatiivses seoses (ρ(405) = -0.31, p < 0.001).
+
+Järeldus. Auto mudeli väljalaske aasta ja mootori maht on nõrgalt seotud: Mida uuem on auto mudel, seda väiksem on selle auto mootori maht ning mida suurem on auto mootori maht, seda vanem on selle auto mudel.
+
+```{r}
+cars %>%
+  dplyr::select(weight, horse) %>%
+  correlation::correlation(method = "spearman")
+```
+
+Kas auto mudeli väljalaske aasta ja mootori maht on oma vahel seotud?
+
+Auto mass (M = `r described_cars["weight", "mean"]` * lbs, SD = `r described_cars["weight", "sd"]` * lbs) ja auto mootori maht (M = `r described_cars["engine", "mean"]` * in^3^, SD = `r described_cars["engine", "sd"]` * in^3^) on oma vahel tugevas positiivses seoses (ρ(399) = 0.88, p < 0.001).
+
+Järeldus. Auto mass ja mootori maht on tugevalt seotud: Mida rohkem auto kaalub, seda suurem on selle auto mootori maht ning mida suurem on auto mootori maht, seda rohkem see auto kaalub.
+
+```{r}
+cars %>%
+  dplyr::select(accel, horse) %>%
+  correlation::correlation(method = "spearman")
+```
+
+Kas auto kiirendamisaeg nullist 60 miilini tunnis ja mootori võimsus on oma vahel seotud?
+
+Auto ajavahemik kiirendamaks nullist 60 miilini tunnis (M = `r described_cars["accel", "mean"]` * s, SD = `r described_cars["accel", "sd"]` * s) ja auto mootori võimsus (M = `r described_cars["horse", "mean"]` * hj, SD = `r described_cars["horse", "sd"]` * hj) on oma vahel nõrgas negatiivses seoses (ρ(399) = -0.68, p < 0.001).
+
+Järeldus. Auto ajavahemik kiirendamaks nullist 60 miilini tunnis ja mootori võimsus on nõrgalt seotud: Mida kauem kestab auto kiirendamine nullist 60 miilini tunnis, seda väiksem on selle auto mootori võimsus ning mida suurem on auto mootori võimsus, seda kiiremini saab selle auto kiirendada nullist 60 miilini tunnis.
+
+```{r}
+cars %>%
+  dplyr::select(year, horse) %>%
+  correlation::correlation(method = "spearman")
+```
+
+Kas auto mudeli väljalaske aasta ja mootori võimsus on oma vahel seotud?
+
+Auto mudeli väljalaske aasta (M = `r described_cars["year", "mean"]`, SD = `r described_cars["year", "sd"]`) ja auto mootori võimsus (M = `r described_cars["horse", "mean"]` * hj, SD = `r described_cars["horse", "sd"]` * hj) on oma vahel nõrgas negatiivses seoses (ρ(399) = -0.39, p < 0.001).
+
+Järeldus. Auto mudeli väljalaske aasta ja mootori võimsus on nõrgalt seotud: Mida uuem on auto mudel, seda väiksem on selle auto mootori võimsus ning mida väiksem on auto mootori võimsus, seda vanem on auto mudel.
+
+```{r}
+cars %>%
+  dplyr::select(accel, weight) %>%
+  correlation::correlation(method = "spearman")
+```
+
+Kas auto ajavahemik kiirendamaks nullist 60 miilini tunnis ja mass on oma vahel seotud?
+
+Auto ajavahemik kiirendamaks nullist 60 miilini tunnis (M = `r described_cars["accel", "mean"]` * s, SD = `r described_cars["accel", "sd"]` * s) ja auto mass (M = `r described_cars["weight", "mean"]` * lbs, SD = `r described_cars["weight", "sd"]` * lbs) on oma vahel nõrgas negatiivses seoses (ρ(405) = -0.43, p < 0.001).
+
+Järeldus. Auto ajavahemik kiirendamaks nullist 60 miilini tunnis ja mass on nõrgalt seotud: Mida kauem kestab auto kiirendamine nullist 60 miilini tunnis, seda väiksem on selle auto mass ning mida rohkem auto kaalub, seda kiiremini saab selle auto nullist 60 miilini tunnis.
+
+```{r}
+cars %>%
+  dplyr::select(year, weight) %>%
+  correlation::correlation(method = "spearman")
+```
+
+Kas auto mudeli väljalaske aasta ja mass on oma vahel seotud?
+
+Auto mudeli väljalaske aasta (M = `r described_cars["year", "mean"]`, SD = `r described_cars["year", "sd"]`) ja auto mass (M = `r described_cars["weight", "mean"]` * lbs, SD = `r described_cars["weight", "sd"]` * lbs) on oma vahel nõrgas negatiivses seoses (ρ(405) = -0.28, p < 0.001).
+
+Järeldus. Auto mudeli väljalaske aasta ja mass on nõrgalt seotud: Mida uuem on auto mudel, seda vähem see auto kaalub ning mida rohkem auto kaalub, seda vanem selle auto mudel on.
+
+```{r}
+cars %>%
+  dplyr::select(year, accel) %>%
+  correlation::correlation(method = "spearman")
+```
+
+Kas auto mudeli väljalaske aasta ja kiirendamisaeg nullist 60 miilini tunnis on oma vahel seotud?
+
+Auto mudeli väljalaske aasta (M = `r described_cars["year", "mean"]`, SD = `r described_cars["year", "sd"]`) ja auto ajavahemik kiirendamaks nullist 60 miilini tunnis (M = `r described_cars["accel", "mean"]` * s, SD = `r described_cars["accel", "sd"]` * s) on oma vahel nõrgas positiivses seoses (ρ(405) = 0.29, p < 0.001).
+
+Järeldus. Auto mudeli väljalaske aasta ja kiirendusaeg nullist 60 miilini tunnis on nõrgalt seotud: Mida uuem on auto mudel, seda kauem kestab selle auto kiirendamine nullist 60 miilini tunnis ning mida kauem kestab selle auto kiirendamine nullist 60 miilini tunnis, seda uuem on selle auto mudel.
+
+```{r}
+if(FALSE){
+library(psych)
+corr.test(cars$mpg, y = cars$engine, use = "pairwise",method="spearman",adjust="holm", 
+    alpha=.05,ci=TRUE,minlength=5,normal=TRUE)
+cor.test(cars$mpg, cars$engine, method = 'spearman')
+
+corr.test(cars$mpg, y = cars$horse, use = "pairwise",method="spearman",adjust="holm", 
+    alpha=.05,ci=TRUE,minlength=5,normal=TRUE)
+cor.test(cars$mpg, cars$horse, method = 'spearman')
+
+corr.test(cars$mpg, y = cars$weight, use = "pairwise",method="spearman",adjust="holm", 
+    alpha=.05,ci=TRUE,minlength=5,normal=TRUE)
+cor.test(cars$mpg, cars$weight, method = 'spearman')
+
+corr.test(cars$mpg, y = cars$accel, use = "pairwise",method="spearman",adjust="holm", 
+    alpha=.05,ci=TRUE,minlength=5,normal=TRUE)
+cor.test(cars$mpg, cars$accel, method = 'spearman')
+
+corr.test(cars$mpg, y = cars$year, use = "pairwise",method="spearman",adjust="holm", 
+    alpha=.05,ci=TRUE,minlength=5,normal=TRUE)
+cor.test(cars$mpg, cars$year, method = 'spearman')
+
+corr.test(cars$engine, y = cars$horse, use = "pairwise",method="spearman",adjust="holm", 
+    alpha=.05,ci=TRUE,minlength=5,normal=TRUE)
+cor.test(cars$engine, cars$horse, method = 'spearman')
+
+corr.test(cars$engine, y = cars$weight, use = "pairwise",method="spearman",adjust="holm", 
+    alpha=.05,ci=TRUE,minlength=5,normal=TRUE)
+cor.test(cars$engine, cars$weight, method = 'spearman')
+
+corr.test(cars$engine, y = cars$accel, use = "pairwise",method="spearman",adjust="holm", 
+    alpha=.05,ci=TRUE,minlength=5,normal=TRUE)
+cor.test(cars$engine, cars$accel, method = 'spearman')
+
+corr.test(cars$engine, y = cars$year, use = "pairwise",method="spearman",adjust="holm", 
+    alpha=.05,ci=TRUE,minlength=5,normal=TRUE)
+cor.test(cars$engine, cars$year, method = 'spearman')
+
+corr.test(cars$horse, y = cars$weight, use = "pairwise",method="spearman",adjust="holm", 
+    alpha=.05,ci=TRUE,minlength=5,normal=TRUE)
+cor.test(cars$horse, cars$weight, method = 'spearman')
+
+corr.test(cars$horse, y = cars$accel, use = "pairwise",method="spearman",adjust="holm", 
+    alpha=.05,ci=TRUE,minlength=5,normal=TRUE)
+cor.test(cars$horse, cars$accel, method = 'spearman')
+
+corr.test(cars$horse, y = cars$year, use = "pairwise",method="spearman",adjust="holm", 
+    alpha=.05,ci=TRUE,minlength=5,normal=TRUE)
+cor.test(cars$horse, cars$year, method = 'spearman')
+
+corr.test(cars$weight, y = cars$accel, use = "pairwise",method="spearman",adjust="holm", 
+    alpha=.05,ci=TRUE,minlength=5,normal=TRUE)
+cor.test(cars$weight, cars$accel, method = 'spearman')
+
+corr.test(cars$weight, y = cars$year, use = "pairwise",method="spearman",adjust="holm", 
+    alpha=.05,ci=TRUE,minlength=5,normal=TRUE)
+cor.test(cars$weight, cars$year, method = 'spearman')
+
+corr.test(cars$accel, y = cars$year, use = "pairwise",method="spearman",adjust="holm", 
+    alpha=.05,ci=TRUE,minlength=5,normal=TRUE)
+cor.test(cars$accel, cars$year, method = 'spearman')
+
+model <- lm(mpg ~ engine, data = cars)
+summary(model)
+model <- lm(mpg ~ horse, data = cars)
+summary(model)
+model <- lm(mpg ~ weight, data = cars)
+summary(model)
+model <- lm(mpg ~ accel, data = cars)
+summary(model)
+model <- lm(mpg ~ year, data = cars)
+summary(model)
+model <- lm(engine ~ horse, data = cars)
+summary(model)
+model <- lm(engine ~ weight, data = cars)
+summary(model)
+model <- lm(engine ~ accel, data = cars)
+summary(model)
+model <- lm(engine ~ year, data = cars)
+summary(model)
+model <- lm(horse ~ weight, data = cars)
+summary(model)
+model <- lm(horse ~ accel, data = cars)
+summary(model)
+model <- lm(horse ~ year, data = cars)
+summary(model)
+model <- lm(weight ~ accel, data = cars)
+summary(model)
+model <- lm(weight ~ year, data = cars)
+summary(model)
+model <- lm(accel ~ year, data = cars)
+summary(model)
+}
+```
+
+Nagu on näha igast mudelist, *p*-väärtus on väiksem kui .05. Seega on kõik tunnused - miili galloni kohta, mootori maht, võimsus, kiirendusaeg ja aasta omavahel oluliselt seotud.
+
+Viskan siia veel koondpildi:
+
+```{r}
+library(PerformanceAnalytics)
+cars_selected <- select(cars, mpg, engine, horse, weight, accel, year)
+chart.Correlation(cars_selected, histogram = TRUE, method = "spearman")
+```
+
+### Uurimisküsimus
+
+Millised tunnused iseloomustavad kõige enam vahemaad, mida saab ühe galloni kütusega läbida?
+
+### Regressioonanalüüsimine
+
+Lasen esmalt analüüsida kõiki muid tunnuseid vahemaa galloni kohta suhtes:
+
+```{r regression-parameters-all}
+cars$cylinder <- as.numeric(cars$cylinder)
+model_norm <- lm(mpg ~ engine + horse + weight + accel + year + cylinder + origin, data = cars)
+model_norm
+library(parameters)
+model_norm %>% parameters()
+```
+
+Väljundist \ref{regression-parameters-all} näen, et *p* väärtus on kiirendusaja puhul üle .05. Seega eemaldan sisenditest kiirendusaja ja lasen teostada uue analüüsi:
+
+```{r}
+model_norm <- lm(mpg ~ engine + horse + weight + year + cylinder + origin, data = cars)
+model_norm
+library(rstatix)
+model_norm %>% parameters()
+```
+
+Sedapuhku on kõikide järelejäänud sisendtunnuste *p* väärtused sobilikud, välja arvatud Ameerika päritolu, mille kohta ei suudetud hinnangut väljastada. Ühtlasi saabki ainult kaht päritolu korraga kaasata, nii et jätan meelevaldselt valitud kaks päritolu. Põhjus on see, et kui on 0, 0, 1, siis võetakse arvutusse ainult erinevad võimalikud väärtused 0, 1.
+
+```{r regression-table}
+library(pubh)
+r2 <- get_r2(model_norm)
+model_norm %>% 
+  glm_coef(labels = model_labels(model_norm)) %>%
+  as_hux() %>% set_align(everywhere, 2:3, "right") %>%
+  theme_pubh() %>%
+  add_footnote(r2, font_size = 9)
+```
+
+
+```{r}
+#model_norm %>% Anova()
+#library(performance)
+#model_norm %>% performance()
+#model_norm <- lm(mpg ~ engine + weight + year + American_dummy, data = cars)
+#model_norm
+#library(rstatix)
+#model_norm %>% Anova()
+#model_norm %>% parameters()
+#library(performance)
+#model_norm %>% performance()
+```
+
+```{r}
+if(FALSE) {
+engine_mpg <- ggplot(cars, aes(engine, mpg)) +
+  geom_point() +
+  theme_bw() +
+  labs(x = "Engine Displacement (cu. inches)") +
+  labs(y = "Miles per Gallon") +
+  geom_smooth()
+engine_mpg_lm <- ggplot(cars, aes(engine, mpg)) +
+  geom_point() +
+  theme_bw() +
+  labs(x = "Engine Displacement (cu. inches)") +
+  labs(y = "Miles per Gallon") +
+  geom_smooth(method = "lm") # with linear model smoothing!
+ggpubr::ggarrange(engine_mpg, engine_mpg_lm, ncol = 2, nrow = 1)
+# create initial model
+engine_mpg.lm <- lm(mpg ~ engine, data = cars)
+# inspect results
+summary(engine_mpg.lm)
+# use pt function (which uses t-values and the degrees of freedom)
+2*pt(-2.383, nrow(cars)-1)
+# create intercept-only base-line model
+engine_mpg_0.lm <- lm(mpg ~ 1, data = cars)
+# compare the base-line and the more saturated model
+anova(engine_mpg.lm, engine_mpg_0.lm, test = "F")
+# DF = N - number of predictors (including intercept)
+DegreesOfFreedom <- nrow(cars)-length(coef(engine_mpg.lm))
+# sum of the squared residuals
+SumSquaredResiduals <- sum(resid(engine_mpg.lm)^2)
+# Residual Standard Error
+sqrt(SumSquaredResiduals/DegreesOfFreedom); DegreesOfFreedom
+# generate data
+df2 <- data.frame(id = 1:length(resid(engine_mpg.lm)),
+                 residuals = resid(engine_mpg.lm),
+                 standard = rstandard(engine_mpg.lm),
+                 studend = rstudent(engine_mpg.lm))
+# generate plots
+p1 <- ggplot(df2, aes(x = id, y = residuals)) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  geom_point() +
+  labs(y = "Residuals", x = "Index")
+p2 <- ggplot(df2, aes(x = id, y = standard)) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  geom_point() +
+  labs(y = "Standardized Residuals", x = "Index")
+p3 <- ggplot(df2, aes(x = id, y = studend)) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  geom_point() +
+  labs(y = "Studentized Residuals", x = "Index")
+# display plots
+ggpubr::ggarrange(p1, p2, p3, ncol = 3, nrow = 1)
+# load functions
+source("https://slcladal.github.io/rscripts/slrsummary.r")
+# create summary table
+slrsummary(engine_mpg.lm) 
+# generate summary table
+library(sjPlot)
+sjPlot::tab_model(engine_mpg.lm) 
+}
+```
+
+### Järeldus
+
+```{r}
+library(report)
+report::report(model_norm)
+```
+
+Tõenäosusega `r r2` kehtib standarhälbeid arvesse võttes funktsioon:
+
+$$mpg = -16.09 + .03 \cdot engine -.03 \cdot horse -.01 \cdot weight + .77 \cdot year -1.3 \cdot cylinder + 2.59 \cdot Europe_{dummy} + 2.85 \cdot Japan_{dummy}$$
+
+Näidisarvutus auto tunnusega *370* kohta:
+
+```{r}
+mpg <- -16.09 + .03 * 105 -.03 * 63 -.01 * 2215 + .77 * 81 -1.3 * 4 + 2.59 * 0 + 2.85 * 0
+```
+
+Nimetatud tõenäosusega ennustatud galloni kütusega läbitav vahemaa selle auto kohta on `r mpg` * mi. Tegelik väärtus on 34.7. Ehk mingi teise auto puhul saame täpsema ennustuse, praegu on mu ajaressurss ammendunud.

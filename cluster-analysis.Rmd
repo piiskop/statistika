@@ -1,0 +1,163 @@
+---
+title: "Dendrogramm"
+author: 'peacecop kalmer:'
+date: "4/28/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Hierarhiline klasteranalüüs
+
+### Ülesande püstitus
+
+Tehke läbi hierarhiline klasteranalüüs, ning üritage leida tunnus mis kõige paremini eristab autosid. Pange ülesse Teie arvates parim klasteranalüüs praktikumi lehele, lisage kommentaar mis tunnusega on tegemist ning mittu klastrit te eristate.
+
+### Lahendus
+
+```{r hierarchical-cluster-analysis}
+library(haven)
+cars <- read_sav("carsPraktikum4.28.22.sav")
+cars <- haven::as_factor(cars)
+library(dplyr)
+distance_mat_mpg <- dist(cars$mpg, method = 'euclidean')
+distance_mat_mpg
+#set.seed(240)  # Setting seed
+Hierar_cl <- hclust(distance_mat_mpg, method = "average")
+Hierar_cl
+plot(Hierar_cl)
+#abline(h = 110, col = "green")
+fit <- cutree(Hierar_cl, k = 3 )
+fit
+table(fit)
+rect.hclust(Hierar_cl, k = 3, border = "green")
+distance_mat_engine <- dist(cars$engine, method = 'euclidean')
+distance_mat_engine
+#set.seed(240)  # Setting seed
+Hierar_cl <- hclust(distance_mat_engine, method = "average")
+Hierar_cl
+plot(Hierar_cl)
+#abline(h = 110, col = "green")
+fit <- cutree(Hierar_cl, k = 2 )
+fit
+table(fit)
+rect.hclust(Hierar_cl, k = 2, border = "green")
+distance_mat_horse <- dist(cars$horse, method = 'euclidean')
+distance_mat_horse
+#set.seed(240)  # Setting seed
+Hierar_cl <- hclust(distance_mat_horse, method = "average")
+Hierar_cl
+plot(Hierar_cl)
+#abline(h = 110, col = "green")
+fit <- cutree(Hierar_cl, k = 2 )
+fit
+table(fit)
+rect.hclust(Hierar_cl, k = 2, border = "green")
+distance_mat_weight <- dist(cars$weight, method = 'euclidean')
+distance_mat_weight
+#set.seed(240)  # Setting seed
+Hierar_cl <- hclust(distance_mat_weight, method = "average")
+Hierar_cl
+plot(Hierar_cl)
+#abline(h = 110, col = "green")
+fit <- cutree(Hierar_cl, k = 2 )
+fit
+table(fit)
+rect.hclust(Hierar_cl, k = 2, border = "green")
+distance_mat_accel <- dist(cars$accel, method = 'euclidean')
+distance_mat_accel
+#set.seed(240)  # Setting seed
+Hierar_cl <- hclust(distance_mat_accel, method = "average")
+Hierar_cl
+plot(Hierar_cl)
+#abline(h = 110, col = "green")
+fit <- cutree(Hierar_cl, k = 3 )
+fit
+table(fit)
+rect.hclust(Hierar_cl, k = 3, border = "green")
+distance_mat_year <- dist(cars$year, method = 'euclidean')
+distance_mat_year
+#set.seed(240)  # Setting seed
+Hierar_cl <- hclust(distance_mat_year, method = "average")
+Hierar_cl
+plot(Hierar_cl)
+#abline(h = 110, col = "green")
+fit <- cutree(Hierar_cl, k = 2 )
+fit
+table(fit)
+rect.hclust(Hierar_cl, k = 2, border = "green")
+distance_mat_Europe_dummy <- dist(cars$Europe_dummy, method = 'euclidean')
+distance_mat_Europe_dummy
+#set.seed(240)  # Setting seed
+Hierar_cl <- hclust(distance_mat_Europe_dummy, method = "average")
+Hierar_cl
+plot(Hierar_cl)
+#abline(h = 110, col = "green")
+fit <- cutree(Hierar_cl, k = 2 )
+fit
+table(fit)
+rect.hclust(Hierar_cl, k = 2, border = "green")
+distance_mat_Japan_dummy <- dist(cars$Japan_dummy, method = 'euclidean')
+distance_mat_Japan_dummy
+#set.seed(240)  # Setting seed
+Hierar_cl <- hclust(distance_mat_Japan_dummy, method = "average")
+Hierar_cl
+plot(Hierar_cl)
+#abline(h = 110, col = "green")
+fit <- cutree(Hierar_cl, k = 2 )
+fit
+table(fit)
+rect.hclust(Hierar_cl, k = 2, border = "green")
+distance_mat_American_dummy <- dist(cars$American_dummy, method = 'euclidean')
+distance_mat_American_dummy
+#set.seed(240)  # Setting seed
+Hierar_cl <- hclust(distance_mat_American_dummy, method = "average")
+Hierar_cl
+plot(Hierar_cl)
+#abline(h = 110, col = "green")
+fit <- cutree(Hierar_cl, k = 2 )
+fit
+table(fit)
+rect.hclust(Hierar_cl, k = 2, border = "green")
+```
+
+Kõige paremini saab klasterdada miilide järgi galloni kohta, sest selle puhul on kõige enam klastreid ja kõige pikem vertikaalne joon on kõige pikem (umbes neljast kümneni).
+
+## K-analüüs
+
+### Ülesande püstitus
+
+Arvestades hierarhilises klasteranalüüsis väljaselgitatud klastrite arvu iga tunnuse kohta teen K-analüüsid.
+
+### Lahendus
+
+```{r}
+cars_2 <- read_sav("carsPraktikum4.28.2022VOL2.sav")
+cars_2 <- haven::as_factor(cars_2)
+library(MVN)
+index <- na.omit(cars_2[,c(2)])
+index
+data_standarisasi <- scale(index)
+data_standarisasi
+kluster.jarak <- lapply(data_standarisasi, as.vector)
+library(factoextra)
+jarak <- get_dist(kluster.jarak)
+	
+stats::hclust(jarak, method = "ward.D2")
+fviz_dist(jarak, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+k3 <- kmeans(kluster.jarak, centers = 3, nstart = 100)
+k3
+hasil <- data.frame(index, k3$cluster)
+hasil
+kluster1 <-subset(hasil, k3.cluster==1)
+kluster2 <-subset(hasil, k3.cluster==2)
+kluster3 <-subset(hasil, k3.cluster==3)
+kluster_1 <-sapply(kluster1, mean)
+kluster_2 <-sapply(kluster2, mean)
+kluster_3 <-sapply(kluster3, mean)
+mean_total <-rbind(kluster_1, kluster_2, kluster_3)
+mean_total
+```
+

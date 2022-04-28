@@ -1,0 +1,215 @@
+---
+title: '5. praktikum: vähkkasvaja'
+author: 'peacecop kalmer:'
+date: "3/17/2022"
+output:
+  bookdown::html_document2:
+    toc: TRUE
+    toc_float: TRUE
+    code_folding: hide
+bibliography: references.bib
+biblio-style: "apalike"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if(FALSE) {
+data("selfesteem", package = "datarium")
+head(selfesteem, 3)
+library(rstatix)
+selfesteem <- selfesteem %>%
+  gather(key = "time", value = "score", t1, t2, t3) %>%
+  convert_as_factor(id, time)
+head(selfesteem, 3)
+selfesteem %>%
+  group_by(time) %>%
+  get_summary_stats(score, type = "common")
+library(ggpubr)
+ggboxplot(selfesteem, x = "time", y = "score", add = "jitter")
+res.fried <- selfesteem %>% friedman_test(score ~ time |id)
+res.fried
+selfesteem %>% friedman_effsize(score ~ time |id)
+# pairwise comparisons
+pwc <- selfesteem %>%
+  wilcox_test(score ~ time, paired = TRUE, p.adjust.method = "bonferroni")
+pwc
+pwc <- pwc %>% add_xy_position(x = "time")
+ggboxplot(selfesteem, x = "time", y = "score", add = "point") +
+  stat_pvalue_manual(pwc, hide.ns = TRUE) +
+  labs(
+    subtitle = get_test_label(res.fried,  detailed = TRUE),
+    caption = get_pwc_label(pwc)
+  )
+}
+```
+
+
+# 5. praktikum: vähkkasvaja
+
+## Ülesande püstitus
+
+Andmestikus cancer.sav
+
+Püstitage kaks küsimust sõltuva valimi t-testi jaoks. Viige läbi ja esitage
+
+Püsitage üks küsimus Friedmani testi jaoks. Viige läbi ja esitage.
+
+## Lahendus
+
+### Andmete hankimine
+
+```{r}
+library(haven)
+cancer <- read_sav("cancer.sav")
+cancer <- haven::as_factor(cancer)
+library(ggpubr)
+```
+
+### Küsimused sõltuva valimi t-testi jaoks
+
+Mida suurem on suu oleku skoor, seda lihtsam on inimesel rääkida.
+
+1. Kas suu oleku väärtuste keskmine oli esialgses mõõtmises oluliselt erinev suu oleku keskmisest väärtusest mõõtmises kaks nädalat hiljem?
+
+2. Kas suu oleku väärtuste keskmine oli esialgses mõõtmises oluliselt erinev suu oleku keskmisest väärtusest mõõtmises neli nädalat hiljem?
+
+### t-testi läbiviimine
+
+```{r}
+library(psych)
+describe(cancer)
+t.test(cancer$TOTALCIN, cancer$TOTALCW2, paired = TRUE, alternative = "two.sided")
+t.test(cancer$TOTALCIN, cancer$TOTALCW6, paired = TRUE, alternative = "two.sided")
+```
+
+### t-testi tulemus
+
+1. Vastavalt tulemustele oli patsientide kõnevõime esialgses mõõtmises väiksem (M = 6.52, SD = 1.53) võrreldes mõõtmisega kaks nädalat hiljem (M = 8.28
+SD = 9.48), antud tulemus oli statistiliselt oluline (t(24) = -3.4903, p = 0.001887).
+
+2. Vastavalt tulemustele oli patsientide kõnevõime esialgses mõõtmises väiksem (M = 6.52, SD = 1.53) võrreldes mõõtmisega kuus nädalat hiljem (M = 9.48, SD = 3.49), antud tulemus oli statistiliselt oluline(t(22) = -3.9092, p = 0.0007524).
+
+### Küsimused Friedmani testi jaoks
+
+Kuidas erineb patsientide kõnevõime esialgsest mõõtmisest mõõtmiseni neli nädalat hiljem?
+
+### Friedmani testi läbiviimine
+
+Normaalsuse eeldamine tähendab, et sõltuva muutuja väärtused peavad olema igati normaalselt jaotatud. 
+
+Kasutan vähihaigete andmekogumit, mis on kogutud nelja ajahetke kohta.
+
+Kogun tunnused *TOTALCIN*, *TOTALCW2* ja *TOTALCW4* pika täisarvu vormingusse. Teisendan *ID* ja aja muutujad faktori (grupi) muutujateks:
+
+```{r friedman-converting}
+library(rstatix)
+data <- cancer %>%
+  gather(key = "time", value = "score", TOTALCIN, TOTALCW2, TOTALCW4) %>%
+  convert_as_factor(ID, time)
+data.frame(head(data, 3))
+```
+
+Eesmärgina on tehtud kindlaks, kas on olulisi erinevusi ajahetkede vahel.
+```{r friedman-summary}
+summary<-data %>%
+group_by(time) %>%
+get_summary_stats(score, type = "mean_sd")
+data.frame(summary)
+outlier<-data %>%
+group_by(time) %>%
+identify_outliers(score)
+data.frame(outlier)
+```
+
+Saan kasutada Shapiro-Wilki testi testimaks normaaljaotust. Olen informeeritud, et kui andmekogum on väike, siis Shapiro-Wilki test olevat ideaalne, muidu võiksin kasutada graafikut.
+```{r friedman-normality}
+normality<-data %>%
+  group_by(time) %>%
+  shapiro_test(score)
+data.frame(normality)
+```
+
+Normaaljaotuse eeldamist saab kontrollida arvutades Shapiro-Wilki testitulemuse iga ajahetke kohta. Kui andmed on normaalselt jaotatud, peaks p-väärtus olema 0.05'st suurem.
+
+Testitud andmed ei olnud mitte üheski ajahetkes normaalselt jaotatud vastavalt Shapiro-Wilki testi hinnangule (p < 0.05).
+
+Kui valim on suurem kui 50, on parem kasutada graafikut, sest suuremate valimite puhul on Shapiro-Wilki test väga tundlik isegi väikeste hälvete suhtes normaalsusest.
+
+Tuginedes ANOVA korratud mõõtmistele on kõik paarikaupa eksisteerivad erinevused ajahetkede vahel statistiliselt olulised. [@ANOVA]
+
+Friedmani testi kasutatakse hindamaks, kas on statistiliselt olulisi erinevusi kolme või enama paaritatud grupi vahel. Seda soovitatakse, kui ühesuunaliste korratud ANOVA testide tulemused normaaljaotuse eeldamise suhtes on negatiivsed või kui sõltuvad muutujad on järjestustunnused.
+
+Rühmade mitmekordset paarilist võrdlust kasutatakse selleks, et teha kindlaks, millised paarid rühmades on oluliselt erinevad.
+
+Friedmani testi mõju suurus tehakse kindlaks Kendalli W'ga. [@multiple-pairwise-comparisons]
+
+Lasen arvutada mõningase kokkuvõtva statistika suu tervenemise skoori kohta grupiti (aeg):
+
+```{r friedman-grouped-summary}
+data %>%
+  group_by(time) %>%
+  get_summary_stats(score, type = "common")
+```
+
+Loon karpdiagrammi ja lisan sellele eraldi väärtustele vastavad punktid
+
+```{r friedman-boxplot}
+ggboxplot(data, x = "time", y = "score", add = "jitter")
+```
+
+Kasutan torusõbralikku *friedman_test()*i talitlust [*rstatix*i teek], mis on R'i baasfunktsiooni *friedman.test()* ümbris.
+
+```{r friedman-test}
+res.fried <- data %>% friedman_test(score ~ time |ID)
+res.fried
+```
+
+Suu tervenemise skoor oli statistiliselt oluliselt erinev eri ajahetkedes mõõtmise ajavahemiku kestel, X2(2) = 27.9, p = 8.62e-07.
+
+Kendalli W'd saab kasutada mõõtmaks Friedmani testi mõju suurust. See arvutatakse järgmiselt: W = X2/N(K-1); kus *W* on Kendalli W väärtus; *X2* on Friedmani testi statistiku väärtus; *N* on valimi suurus. *k* on ühe patsiendi kohta teostatud mõõtmiste arv [@estimates].
+
+Kendalli W koefitsient eeldab väärtust nullist (pole seost) üheni (täiuslik seos).
+
+Kendalli W kasutab Coheni interpretatsiooni juhiseid vahemikes 0.1 - < 0.3 (väike mõju), 0.3 - < 0.5 (mõõdukas mõju) and >= 0.5 (suur mõju). Usaldusintervallid arvutatakse bootstapiga.
+
+```{r friedman-effect-size}
+data %>% friedman_effsize(score ~ time |ID)
+```
+
+Kindlaks on tehtud suur mõju suurus, W = 0.91.
+
+Friedmani testi väljundi põhjal tean, et rühmade vahel on oluline erinevus, aga ma ei tea, millised rühmade paarid on erinevad.
+
+Olulisele Friedmani testile võivad järgneda paarikaupa Wilcoxoni märgistatud astmelised testid, et teha kindlaks, millised rühmad on erinevad. 
+
+Täheldan, et andmed peavad olema blokeeriva muutuja (*ID*) järgi õigesti järjestatud, nii et esimene vaatlus ajahetke *TOTALCIN* jaoks oleks seotud ajahetke *TOTALCW2* esimese vaatlusega ja nii edasi.
+
+P-väärtused kohandatakse kasutades Bonferroni mitmekordse testimise korrigeerimismeetodit.
+
+```{r wilcoxon-bonferroni}
+# pairwise comparisons
+pwc <- data %>%
+  wilcox_test(score ~ time, paired = TRUE, p.adjust.method = "bonferroni")
+pwc
+```
+
+Kõik paarikaupa erinevused on statistiliselt olulised.
+
+Suutervise skoor oli statistiliselt oluliselt erinev eri ajahetkedes kasutades Friedmani testi, X2(2) = 27.9, p = 8.62e-07.
+
+Paarikaupa Wilcoxoni märgistatud astmeline test rühmade vahel näitas statistiliselt olulisi erinevus suutervise skooris *TOTALCIN*i ja *TOTALCW2* vahel (p = .008); *TOTALCIN*i ja *TOTALCW4* vahel (p = .000278); *TOTALCW2* ja *TOTALCW4* vahel (p = .021).
+
+```{r wilcoxon-boxplot}
+pwc <- pwc %>% add_xy_position(x = "time")
+ggboxplot(data, x = "time", y = "score", add = "point") +
+  stat_pvalue_manual(pwc, hide.ns = TRUE) +
+  labs(
+    subtitle = get_test_label(res.fried,  detailed = TRUE),
+    caption = get_pwc_label(pwc)
+  )
+```
+
+Kui sarnaselt toimetada *PSPP*'s, siis tuleb valida *2 related samples*, tekitada paarid, kolm paari, jagada .05 kolmega, millest peavad väiksemad olema kõik *asymp sig 2-tailed*'i väärtused.
