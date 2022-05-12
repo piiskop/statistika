@@ -1,0 +1,330 @@
+---
+title: "Hajuvuste võrdlemine"
+author: 'peacecop kalmer:'
+date: '2022-05-05'
+output:
+  bookdown::html_document2:
+    toc: TRUE
+    toc_float: TRUE
+---
+
+# Sõltumatute gruppide võrdlemine
+
+## Teooria
+
+"Sõltumatute valimite t-test tehakse tavaliselt siis, kui analüütik soovib testida keskmisi erinevusi kahe erineva töötluse või seisundi vahel. Näiteks võib soovida näha, kas esimese aasta õpilased said eksamil teistsuguse tulemuse kui teise kursuse õpilased.
+
+Sõltumatute valimite t-testi kasutatakse tavaliselt siis, kui igale katseüksusele (uuringusubjekt) määratakse ainult üks kahest saadaolevast töötlusest. Seega ei ole rühmadel kattuvaid liikmeid ja neid peetakse iseseisvateks. Sõltumatute valimite t-test on kõige lihtsam vorm "subjektidevahelise" analüüsi jaoks.
+
+Kahepoolne nullhüpotees on see, et rühmade keskmiste vahel ei ole erinevusi, samas kui alternatiivne hüpotees on see, et keskmised väärtused erinevad rühmade vahel.
+
+H0: μ1 = μ2
+
+Ha: μ1 ≠ μ2 [---]
+
+Sõltumatute valimite t-test nõuab järgmisi eeldusi:
+
+1. Huvipakkuv reaktsioon on pidev ja jaotub tavaliselt iga rühma jaoks.
+2. Rühmad on üksteisest sõltumatud. Katseüksused saavad ainult ühte liiki käitluse ja kattuvust ei ole.
+3. Suuri kõrvalekaldeid pole.
+4. Ebavõrdsete dispersioonide kontrollimine aitab kindlaks teha, milline t-testi versioon on kõige sobivam:
+    a. Kui dispersioonid on võrdsed, on kombineeritud t-testi eeldused asjakohased.
+    b. Kui dispersioonid on ebavõrdsed, on sobiv Satterthwaite'i (tuntud ka kui Welchi) t-test. [---]
+    
+Kirjeldavat statistikat ei kasutata mitte ainult andmete kirjeldamiseks, vaid see aitab ka kindlaks teha, kas esineb vastuolusid. Kirjeldava statistika üksikasjalik uurimine võib aidata vastata järgmistele küsimustele (lisaks paljudele teistele):
+
+- Kui palju andmeid mul on?
+- Kas mul on potentsiaalseid kõrvalekaldeid?
+- Kas minu standardhälbe ja standardvea väärtused on keskmise suhtes suured?
+- Millisesse vahemikku jääb suurem osa minu andmetest iga käitluse kohta? [---]
+
+Enne t-testi läbiviimist on oluline oma eeldused kinnitada, et tagada asjakohane ja usaldusväärne võrdlus. Normaalsuse testimiseks tuleks kasutada Shapiro-Wilki normaalsuse testi (või samaväärset) ja QQ graafikut suurte valimite jaoks. Sageli võivad ka histogrammid abiks olla, eriti suurte valimite puhul." [@independent]
+
+## Ülesande püstitus
+
+1)  Valige üks dummy  väärtus kas euroopa, ammerika või jaapani_dummy. Ning viige läbi t-test võrdlemaks kuidas muud tunnused (e. autode omadused) erinevad teie valitud riigi ja teiste riigi autode vahel. Püstitage küsimus, H1 ja H0 hüpotees, ning kirjutage välja vastus nii nagu näites oli välja toodud:
+
+    Käesolevas töös oli püstitatud küsimus, et kas erineva kiirendamisega autode kaalu keskmised on erinevad. Vastavalt tulemustele kiiremini kiirendavate auto kaal (M = 3699,42; SD = 796.35), aeglasemalt kiirendavate autode keskmine kaal  oli (M = 2658.97; SD = 659.49), keskmise kiirendamise autode keskmine kaal oli (M = 2747.14; SD = 717.91) antud erinevus oli statistiliselt oluline F(2,402) = 70.758 p < 0.001. Vastavalt Tukey HSD post-hoc testile kiiremeni kiirendavate autode keskmine erines aeglasemate (p < 0.001) ja keskmiste autodest (p < 0.001)
+
+2) Viige läbi ANOVA analüüs. Vastavalt eelmises loengus läbiviidud k-keskmiste klasteranalüüsile jaotage aotud gruppidesse (lihtsam on viia läbi uuesti k-kesmiste analüüs). See järel valige üks arvtunnus andmestikus ning viige läbi ANOVA. Püstitage küsimus/hüpotees, h1 ja h0 hüpoteesid ning kirjutage vastus vastavalt näitele. 
+
+## Lahendus
+
+Valisin *dummy*-väärtuseks *Europe_dummy*'. Asun testima, kas Euroopa päritolu autod läbivad statistiliselt oluliselt erineva suurima vahemaa kütuseühiku kohta kui muu päritoluga autod.
+
+sõltuv vastusmuutuja
+: *mpg* (*Miles per Gallon* - miili galloni kohta)
+
+sõltumatu kategooriline muutuja
+: *Europe_dummy* (*0*: mitte Euroopa päritoluga auto, *1*: Euroopa päritoluga auto)
+
+[sisendandmed](carsPraktikum4.28.2022VOL2.sav)
+
+Tabelis \@ref(tab:comparing-independent-groups-reading-data-and-describe) kuvatavad usaldustasemed tähendavad, et 95% kindlusega tegelik keskmine jääb iga rühma jaoks määratud alumise ja ülemise väärtuse vahele eeldades, et andmed on normaalselt jaotunud. 
+
+```{r comparing-independent-groups-reading-data-and-describe}
+library(haven)
+cars <- read_sav("carsPraktikum4.28.2022VOL2.sav")
+#cars <- haven::as_factor(cars)
+#Designate Europe_dummy as a categorical factor
+cars$Europe_dummy <- as.factor(cars$Europe_dummy)
+cars$Japan_dummy <- as.factor(cars$Japan_dummy)
+cars$American_dummy <- as.factor(cars$American_dummy)
+librarian::shelf("dplyr")
+librarian::shelf(kableExtra)
+summary <- cars %>% select(mpg, Europe_dummy) %>% group_by(Europe_dummy) %>% 
+  summarise(n = n(), 
+            mean = mean(mpg, na.rm = TRUE), 
+            sd = sd(mpg, na.rm = TRUE),
+            stderr = sd/sqrt(n), 
+            LCL = mean - qt(1 - (0.05 / 2), n - 1) * stderr,
+            UCL = mean + qt(1 - (0.05 / 2), n - 1) * stderr,
+            Mediaan = median(mpg, na.rm = TRUE),
+            Miinimum = min(mpg, na.rm = TRUE), 
+            Maksimum = max(mpg, na.rm = TRUE),
+            IQR = IQR(mpg, na.rm = TRUE))
+kable(summary,
+    booktabs = TRUE,
+    escape = FALSE,
+    caption = "Kirjeldav statistika Euroopa ja mitte-Euroopa autode kütuseühikuga sõiduulatuse kohta",
+    digits = 3,
+    col.names = c("Kas Euroopast?^[rühmamuutuja tasemed koos tasemete vaheliste keskmiste erinevustega]", "Mitu?^[Mitu andmepunkti (autot) on igas rühmas, st mitu on Euroopa ja mitu mitte-Euroopa rühmas?]", "Aritmeetiline keskmine^[iga rühma keskmine väärtus]", "Standardhälve^[iga rühma standardhälve]", "Standardviga^[iga rühma standardviga]", "LCL^[madalam usaldustase]", "UCL^[kõrgem usaldustase]", "Mediaan^[iga rühma mediaanväärtus]", "Miinimum", "Maksimum", "IQR^[iga rühma kvartiilide vahemik. Interkvartiilide vahemik on 75. protsentiil – 25. protsentiil]")
+      ) %>% kable_styling(    bootstrap_options = c("striped", "bordered", "condensed", "responsive", "hover"),
+    latex_options = "scale_down",
+    full_width = TRUE
+      )
+```
+
+Tabelis \@ref(tab:comparing-independent-groups-shapiro) *p*-väärtus < 0.05 viitab sellele, et peaksime normaalsuse eelduse tagasi lükkama. Kuna Shapiro-Wilki testi *p*-väärtused on iga rühma kohta < 0.05, järeldan, et andmed ei ole tavaliselt jaotunud.
+
+```{r label = "comparing-independent-groups-shapiro"}
+cars %>%
+  group_by(Europe_dummy) %>%
+  summarise(`W` = shapiro.test(mpg)$statistic,
+            `p` = shapiro.test(mpg)$p.value) %>% kable(
+    booktabs = TRUE,
+    escape = FALSE,
+    caption = "Shapiro-Wilki normaalsustesti tulemus Euroopa ja mitte-Euroopa autode kütuseühikuga sõiduulatuse kohta",
+    digits = 9,
+    col.names = c("Kas Euroopast?", "*W*^[Shapiro-Wilki testi statistika]", "*p*")
+      ) %>% kable_styling(    bootstrap_options = c("striped", "bordered", "condensed", "responsive", "hover"),
+    latex_options = "scale_down",
+    full_width = TRUE
+      )
+librarian::shelf("ggplot2")
+ggplot(cars, aes(x = Europe_dummy, y = mpg, fill = Europe_dummy)) +
+  stat_boxplot(geom = "errorbar", width = 0.5) +
+  geom_boxplot(fill = "light blue") + 
+  stat_summary(fun.y = mean, geom = "point", shape = 10, size = 3.5, color = "black") + 
+  ggtitle("Euroopa ja muu päritolu autode karpdiagramm") + 
+  theme_bw() + theme(legend.position = "none")
+```
+
+Karpdiagrammidelt nähtub, vet kummaski grupis on kõrvalekaldujaid. Tundub, et kõrvalekaldujad veidi mõjutavad ristiga ringiga märgitud aritmeetilist keskmist kuid mitte rõhtsa keskjoonena tähistatud mediaani. Jaotusgraafikud võivad seetõttu olla pisut kaldu.
+
+Valdav enamus punktidest joonisel \@ref(fig:comparing-independent-groups-qq) peaks järgima vastavat joont ja jääma kõvera 95% usaldusvahemikku, et neid saaks pidada normaalselt jaotunuks.
+
+```{r label = "comparing-independent-groups-qq"}
+librarian::shelf("ggplot2")
+librarian::shelf("qqplotr")
+
+ggplot(data = cars, mapping = aes(sample = mpg, color = Europe_dummy, fill = Europe_dummy)) +
+  stat_qq_band(alpha = 0.5, conf = 0.95, qtype = 1, bandType = "ts") +
+  stat_qq_line(identity = TRUE) +
+  stat_qq_point(col = "black") +
+  facet_wrap(~ Europe_dummy, scales = "free") +
+  labs(x = "Teoreetilised kvantiilid", y = "Valimi kvantiilid") + theme_bw() + scale_fill_discrete(name = "Päritolu",
+                         breaks = c("0", "1"),
+                         labels = c("0: mujalt", "1: Euroopast"))+ scale_colour_discrete(name = "Päritolu",
+                         breaks = c("0", "1"),
+                         labels = c("0: mujalt", "1: Euroopast"))
+```
+
+Shapiro-Wilki testi *p*-väärtus < 0.05 ja mitte kummagi joonisel \@ref(fig:comparing-independent-groups-qq) oleva QQ graafiku andmepunktid ei jää mitte kummagi grupeeriva tunnuse 95% usalduspiiridesse. minu Shapiro-Wilki normaalsuse test näitab, et mitte kumbki rühm ei ole normaalselt jaotunud. Seetõttu ei saa t-testi kasutada, sest see eeldab normaaljaotust. Seetõttu jääb ära ka Levene'i testi tegemine või siiski ma näitan selle ära ja suundun Mann-Whitney U testi juurde, mille puhul ei eeldata normaaljaotust.
+
+```{r}
+#Perform Levene's Test of Equality of Variances
+if (!require("car")) {
+  install.packages("car", dependencies = TRUE)
+}
+
+library(car)
+lev1 <- leveneTest(mpg ~ Europe_dummy, data = cars, center = "mean")
+lev2 <- leveneTest(mpg ~ Europe_dummy, data = cars, center = "median")
+print(lev1)
+print(lev2)
+```
+
+Levene'i variatsiooni homogeensuse test viidi läbi traditsioonilise keskmise keskse metoodika ja R-i vaikimisi mediaankeskse metoodika abil.
+
+Df – Iga muutuja ja üldise veaga seotud vabadusastmed.
+F Value – F-statistika, mille p-väärtus arvutatakse.
+Pr > F – Levene'i dispersioonide võrdsuse test näitab p-väärtust 0.01558. Märkimisväärne p-väärtus (p < 0.05) näitab, et kombineeritud t-testi tulemuste asemel tuleks kasutada Satterthwaite'i (tuntud ka kui Welchi) t-testi tulemusi.
+
+Mõlemad testid näitavad, et rühmadevahelised erinevused on ebavõrdsed.
+
+```{r}
+#Produce boxplots and visually check for outliers
+ggplot(cars, aes(x = Europe_dummy, y = mpg, fill = Europe_dummy)) +
+  stat_boxplot(geom ="errorbar", width = 0.5) +
+  geom_boxplot(fill = "light blue") + 
+  stat_summary(fun = mean, geom = "point", shape = 10, size = 3.5, color = "black") + 
+  ggtitle("Boxplots of European and non-European car Groups") + 
+  theme_bw() + theme(legend.position = "none")
+```
+
+
+```{r}
+#Perform an Independent Samples T-test
+m1 <- t.test(mpg ~ Europe_dummy, data = cars, var.equal = FALSE, na.rm = TRUE)
+print(m1)
+```
+
+Igatahes nüüd siis Mann-Whitney U test:
+
+```{r}
+wilcox_result <- wilcox.test(mpg ~ Europe_dummy, data = cars, na.rm = TRUE, paired = FALSE, exact = FALSE, conf.int = TRUE)
+print(wilcox_result)
+```
+
+W – Wilcoxoni testi statistik, mis on valimi asetuste summa, millest on lahutatud n1*(n1+1)/2, kus n1 on valimi liikmete arv.
+p-value – *p* väärtus, mis vastab kahepoolsele testile, mis põhineb standardsel normaaljaotusel (Z). 
+95% confidence interval – 95% usaldusintervall, mille vahemikku jääb sõiduulatuse erinevus Euroopa ja muu päritolu autode vahel.
+difference in location – See väärtus vastab Hodges-Lehmann Estimate'ile.
+
+Selgus, et ei Euroopa ega muu päritolu autode sõiduulatus kütuseühiku kohta ei ole normaalselt jaotunud. Lisaks esineb kummaski rühmas kõrvalekaldujaid. Seetõttu on Mann-Whitney U testi kasutamine sobilikum kui sõltutmatute valimite t-testi kasutamine, et võrrelda auto päritolu mõju kütuseühiku sõiduulatusele.
+
+Mann-Whitney U kahepoolse testi tulemuseks on *p* väärtus $1.38 \times 10^{-7}$. See tähendab, et nullhüpotees, et jaotused on ühesugused, tuleb kõrvale heita, ja järeldada, et autode päritolu mõju kütuseühiku sõiduulatusele on oluliselt erinev. Kirjeldavast statistikast loen välja, et Euroopa päritolu autode kütuseühiku sõiduulatuse miilides mediaanväärtus on 26.5 ja muu päritolu autode puhul on see 21. See tähendab, et sõiduulatuse mediaanide erinevus sõltuvalt päritolust on umbes 5.5. Hodges-Lehmann Estimate näitab täpsemalt, et 5.8 miili saaks ühe galloni kütusega rohkem sõita Euroopa päritolu autoga. Olen 95% kindel, et mediaanerinevus Euroopa ja muu päritolu autode sõiduulatuse vahel terves populatsioonis on 3.8 ja 7.5 miili vahel. Seega saab Euroopa päritolu autodega sama kütuseühikuga kaugemale sõita kui muu päritolu autoga.
+
+Nüüd teine osa.
+
+Kõige paremini saab klasterdada miilide järgi galloni kohta, sest selle puhul on kõige enam klastreid ja kõige pikem vertikaalne joon on kõige pikem. Selliseid klastreid on kokku kolm: kütust palju, keskmiselt ja vähe kasutavad autod.
+
+Kas autode keskmine kiirendus nullist 60 miilini tunnis on erinev tulenevalt sõiduulatusest kütuseühiku kohta?
+
+Nullhüpotees: Erineva sõiduulatusega autode keskmises kiirenduses erinevust ei ole.
+
+Alternatiivne hüpotees: Erineva sõiduulatusega autode keskmises kiirenduses esineb oluline erinevus.
+
+```{r}
+#cars <- haven::as_factor(cars)
+library(MVN)
+cars_mpg_accel <- na.omit(cars[,c(2, 6)])
+data_standarisasi <- scale(cars_mpg_accel[, c(1)])
+kluster.jarak <- lapply(data_standarisasi, as.vector)
+library(factoextra)
+jarak <- get_dist(kluster.jarak)
+k3 <- kmeans(kluster.jarak, centers = 3, nstart = 100)
+k3
+hasil <- data.frame(cars_mpg_accel[, c(1)], k3$cluster)
+#cars_mpg_accel[, c(2)]
+#hasil$accel <- cars_mpg_accel[, c(2)]
+librarian::shelf("tidyverse")
+hasil <- hasil %>% add_column(cars_mpg_accel[, c(2)])
+#hasil
+#Designate treatment as a categorical factor
+hasil$k3.cluster <- as.factor(hasil$k3.cluster)
+#Produce descriptive statistics by treatment
+hasil %>% select(accel, k3.cluster) %>% group_by(k3.cluster) %>% 
+  summarise(n = n(), 
+            mean = mean(accel, na.rm = TRUE), 
+            sd = sd(accel, na.rm = TRUE),
+            stderr = sd/sqrt(n), 
+            LCL = mean - qt(1 - (0.05 / 2), n - 1) * stderr,
+            UCL = mean + qt(1 - (0.05 / 2), n - 1) * stderr,
+            median = median(accel, na.rm = TRUE),
+            min = min(accel, na.rm = TRUE), 
+            max = max(accel, na.rm = TRUE),
+            IQR = IQR(accel, na.rm = TRUE))
+#Perform the Shapiro-Wilk Test for Normality on each group
+hasil %>%
+  group_by(k3.cluster) %>%
+  summarise(`W Stat` = shapiro.test(accel)$statistic,
+            `p-value` = shapiro.test(accel)$p.value)
+```
+
+Kuna Shapiro-Wilki testi *p* väärtused on vähemalt ühe klastri puhul < 0.05 (p = 0.00004, p = 0.2, p = 0.04 vastavalt), järeldan, et andmed ei ole normaaljaotusega.
+
+```{r}
+#Perform QQ plots by group
+ggplot(data = hasil, mapping = aes(sample = accel, color = k3.cluster, fill = k3.cluster)) +
+  stat_qq_band(alpha=0.5, conf=0.95, qtype=1, bandType = "boot", B=5000) +
+  stat_qq_line(identity=TRUE) +
+  stat_qq_point(col="black") +
+  facet_wrap(~ k3.cluster, scales = "free") +
+  labs(x = "Teoreetilised kvantiilid", y = "Valimi kvantiilid") + theme_bw() 
+
+```
+
+Graafikud kinnitavad, et esimene ja kolmas jaotus ei ole normaaljaotused.
+
+```{r}
+#Produce boxplots and visually check for outliers
+ggplot(hasil, aes(x = k3.cluster, y = accel, fill = k3.cluster)) +
+  stat_boxplot(geom ="errorbar", width = 0.5) +
+  geom_boxplot(fill = "light blue") + 
+  stat_summary(fun.y=mean, geom="point", shape=10, size=3.5, color="black") + 
+  ggtitle("Boxplots of plant weight for each treatment") + 
+  theme_bw() + theme(legend.position="none")
+
+```
+
+Igas klastris on kõrvalekaldujaid, mis väga ei paista mõjutavat keskmisi.
+
+Levene'i testi nullhüpotees on, et varieeruvus on ühesugune kõikides klastrites, ja sisuline hüpotees on, et varieeruvus erineb vähemalt ühes klastris.
+
+```{r}
+#Perform Levene's Test of Equality of Variances
+librarian::shelf("car")
+lev1<-leveneTest(accel ~ k3.cluster, data=hasil, center="mean")
+lev2<-leveneTest(accel ~ k3.cluster, data=hasil, center="median")
+print(lev1)
+print(lev2)
+
+```
+
+Kuna kumbki Levene'i test näitab *p* väärtusi üle 0.05 ehk vastavalt 0.1003 ja 0.1127, siis ei saa nullhüpoteesi ümber lükata ja tuleb välja, et jaotus on klastriti ühesugune. Seetõttu läheb mängu standard-ANOVA. Muidu peaks kasutama Welch'i ANOVAt.
+```{r}
+#Perform an ANOVA to check for plant weight differences between treatments
+m1<-lm(accel ~ k3.cluster, data=hasil, contrasts = c("contr.sum", "contr.poly"))
+Anova(m1, type=3)
+ 
+```
+
+*p* väärtus (0.00000000000008) näitab ka ANOVA puhul, et kiirendus erineb sõltuvalt sõiduulatusest.
+```{r}
+#Compute expected marginal means post-hoc tests
+librarian::shelf("emmeans")
+posthocs<-emmeans(m1, pairwise ~ k3.cluster, adjust="tukey")
+posthocs
+```
+
+Klastrid 1 ja 2 ning 2 ja 3 erinevad omavahel oluliselt (p < 0.0001). Erinevusi ei ole klastrite 1 ja 3 vahel (p = 0.5361). Eeldatav keskmiste erinevus klastrite 1 ja 2 vahel on 1.938 ning klastrite 2 ja 3 vahel 2.312. Saab väita, et klastri 3 autode kiirendus on suurem kui klastri 2 autodel ning klastri 1 autode kiirendus on suurem kui klastri 2 autodel.
+
+```{r}
+#Plot estimated marginal means
+emm <- summary(posthocs)$emmeans
+ggplot(emm, aes(k3.cluster)) +
+  geom_line(aes(y = emmean, group = 1)) +
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
+  geom_point(aes(y = emmean), size = 2, color = "blue") +
+  labs(x = "Klaster", y = "Hinnanguline piirkeskmine", 
+       title = "Hinnangulised piirkeskmised 95% usaldusintervallidega") +
+  theme_bw()
+```
+
+Graafikult näeme, et klastrite 1 ja 2 ning 2 ja 3 usaldusintervallid ei kattu.
+
+```{r}
+#Plot contrasts
+plot(posthocs$contrasts) +
+  geom_vline(xintercept = 0) + 
+  theme_bw() +
+  labs(y = "Contrast", 
+       x = "Hinnanguline marginaalne keskmine erinevus", 
+       title = "Hinnangulised marginaalsed keskmised erinevused 95% usaldusintervallidega")
+```
+
+Kui sinine usaldusintervalli joon ei ületa vertikaalset nulljoont, siis eksisteerib erinevus.
+
+Üldine ANOVA *p* väärtus on 0.00000000000008. See tähendab, et statistiliselt oluline erinevus kiirenduses eksisteerib vähemalt kahe klastri ulatuses. *Post-hoc*-test näitas, et erinevus on klastrite 1 ja 2 ning 2 ja 3 vahel (p < 0.0001). Statiliselt olulist erinevust pole klastrite 1 ja 3 vahel.

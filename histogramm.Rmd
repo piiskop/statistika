@@ -274,7 +274,7 @@ measurementsOfParticipant7 %>% kbl(caption = "Kaheksanda tundmatu osaleja reagee
 allMeasurementsIn_m = c(measurementsOf_kalmer_m, measurementsOfElin_m, measurementsOf_birgit_m, measurementsOfParticipant0_m, measurementsOfParticipant1_m, measurementsOfParticipant2_m, measurementsOfParticipant3_m, measurementsOfParticipant4_m, measurementsOf_iTi_m, measurementsOfParticipant5_m, measurementsOf_berit_m, measurementsOfParticipant6_m, measurementsOfParticipant7_m)
 meanForAll = mean(allMeasurementsIn_m)
 standardDeviationForAll = sd(allMeasurementsIn_m)
-library(plotrix)
+librarian::shelf(plotrix)
 standardError = std.error(allMeasurementsIn_m)
 library(distributions3)
 numberOfMeasurements = length(allMeasurementsIn_m)

@@ -570,7 +570,7 @@ formula = y ~ xForPendulum
 
 k = coef(modelForPendulum)[2]
 
-library(ggpmisc)
+librarian::shelf(ggpmisc)
 library(ggpubr)
 ggplot(data = pendulum, mapping = aes(x = xForPendulum, y = t)) +
   labs(x = "x=sqrt(l)", y = "T(s)") +

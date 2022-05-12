@@ -71,8 +71,10 @@ Praktikum0303 %>%
 
 ```{r}
 health_matrix <- as.matrix(Praktikum0303)
+librarian::shelf("GGally")
 GGally::ggscatmat(health_matrix, columns <- c("smoke", "stressmo")) +
   theme_minimal()
+librarian::shelf("correlation")
 Praktikum0303 %>%
   dplyr::select(smoke, stressmo) %>%
   correlation::correlation(method = "kendall")

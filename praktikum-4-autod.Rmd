@@ -37,7 +37,7 @@ library(rstatix)
 model_norm %>% Anova()
 library(parameters)
 model_norm %>% parameters()
-library(performance)
+librarian::shelf(performance)
 model_norm %>% performance()
 #birthwt
 ```
@@ -525,7 +525,7 @@ Nagu on näha igast mudelist, *p*-väärtus on väiksem kui .05. Seega on kõik 
 Viskan siia veel koondpildi:
 
 ```{r}
-library(PerformanceAnalytics)
+librarian::shelf(PerformanceAnalytics)
 cars_selected <- select(cars, mpg, engine, horse, weight, accel, year)
 chart.Correlation(cars_selected, histogram = TRUE, method = "spearman")
 ```
@@ -558,7 +558,7 @@ model_norm %>% parameters()
 Sedapuhku on kõikide järelejäänud sisendtunnuste *p* väärtused sobilikud, välja arvatud Ameerika päritolu, mille kohta ei suudetud hinnangut väljastada. Ühtlasi saabki ainult kaht päritolu korraga kaasata, nii et jätan meelevaldselt valitud kaks päritolu. Põhjus on see, et kui on 0, 0, 1, siis võetakse arvutusse ainult erinevad võimalikud väärtused 0, 1.
 
 ```{r regression-table}
-library(pubh)
+librarian::shelf(pubh)
 r2 <- get_r2(model_norm)
 model_norm %>% 
   glm_coef(labels = model_labels(model_norm)) %>%
@@ -645,7 +645,7 @@ sjPlot::tab_model(engine_mpg.lm)
 ### Järeldus
 
 ```{r}
-library(report)
+librarian::shelf(report)
 report::report(model_norm)
 ```
 

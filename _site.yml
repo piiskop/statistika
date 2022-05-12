@@ -22,5 +22,7 @@ navbar:
       href: praktikum-5-vähkkasvaja.html
     - text: "6. praktikum: klasteranalüüs"
       href: cluster-analysis.html
+    - text: "7. praktikum: hajuvuste võrdlemine"
+      href: hajuvuste-võrdlemine.html
     - text: "Autor"
       href: about.html
